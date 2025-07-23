@@ -738,7 +738,7 @@ const App: React.FC = () => {
                           setConfigIndex(val);
                         }
                       }}
-                      placeholder="Pipe Index (start at 1)"
+                      placeholder="Pipe Index"
                       style={{
                         width: 120,
                         padding: 8,
