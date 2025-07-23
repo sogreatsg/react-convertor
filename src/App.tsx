@@ -646,7 +646,7 @@ const App: React.FC = () => {
           }}
         >
           <h3 style={{ color: "#6366f1", marginBottom: 12 }}>
-            Select Config Template 💁🏻
+            Select Config Template 💁🏻 
           </h3>
           <select
             value={selectedTemplate}
