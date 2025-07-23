@@ -723,11 +723,7 @@ const App: React.FC = () => {
                   <h3 style={{ color: "#6366f1", marginBottom: 12 }}>
                     Pipe Index Config
                   </h3>
-                  <div style={{ color: "#555", marginBottom: 12 }}>
-                    <small>
-                      Pipe index เริ่มต้นที่ 1 และต้องเป็นเลขจำนวนเต็ม 1 ขึ้นไป
-                    </small>
-                  </div>
+              
                   <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
                     <input
                       type="number"
