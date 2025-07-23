@@ -14,3 +14,4 @@ This is a minimal React + TypeScript project scaffolded manually.
    ```
 
 Open http://localhost:3000 in your browser to see the app.
+.
