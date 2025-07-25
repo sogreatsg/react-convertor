@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 
+document.title = "Template Helper";
+
 const detectDelimiter = (input: string): string => {
   const delimiters = [",", ";", "\t", ":"];
   let maxCount = 0;
@@ -649,7 +651,7 @@ const App: React.FC = () => {
 
     const now = new Date();
     const pad = (n: number, len = 2) => n.toString().padStart(len, "0");
-    const senderRefValue =
+    const senderRefBaseValue =
       pad(now.getFullYear() % 100) +
       pad(now.getMonth() + 1) +
       pad(now.getDate()) +
@@ -661,10 +663,10 @@ const App: React.FC = () => {
       pad(now.getMonth() + 1) +
       pad(now.getDate());
 
-    const newUploadedMap = uploadedMap.map((row) =>
+    const newUploadedMap = uploadedMap.map((row, rowIndex) =>
       row.map((item) => {
         if (item.index === senderRefIdx) {
-          return { ...item, value: senderRefValue };
+          return { ...item, value: `${senderRefBaseValue}_${rowIndex + 1}` };
         }
         if (item.index === valueDateIdx) {
           return { ...item, value: valueDateValue };
@@ -722,6 +724,17 @@ const App: React.FC = () => {
           maskRepeat: "no-repeat",
         }}
       ></div>
+      <div
+        style={{
+          textAlign: 'center',
+          marginBottom: 32,
+          fontSize: 32,
+          fontWeight: 'bold',
+          color: '#6366f1',
+        }}
+      >
+        Template Helper
+      </div>
       <div
         style={{
           background: "rgba(255, 255, 255, 0.6)",
