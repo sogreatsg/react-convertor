@@ -451,20 +451,7 @@ const App: React.FC = () => {
       }));
     });
     setUploadedMap(newUploadedMap);
-    // Also update uploadedPipe and uploadedRows
-    const newRows = uploadedRows.map((row, i) => {
-      if (i !== editRowIdx) return row;
-      // Build new pipe string from edited values
-      const maxIndex =
-        configs.length > 0 ? Math.max(...configs.map((cfg) => cfg.index)) : 0;
-      let result: string[] = [];
-      for (let idx = 0; idx <= maxIndex; idx++) {
-        result.push(editRowValues[idx] || "");
-      }
-      return result.join("|");
-    });
-    setUploadedRows(newRows);
-    setUploadedPipe(newRows.join("\n"));
+    updateUploadedPipe(); // Ensure uploadedPipe updates after saving
     setEditRowIdx(null);
     setEditRowValues({});
   };
@@ -687,9 +674,16 @@ const App: React.FC = () => {
   };
 
   const handleCopyToClipboard = () => {
-    navigator.clipboard.writeText(uploadedPipe);
-    setShowModal(true);
-    setTimeout(() => setShowModal(false), 3000); // Auto-hide modal after 3 seconds
+    if (!uploadedPipe.trim()) {
+      console.error("No content to copy.");
+      return;
+    }
+    navigator.clipboard.writeText(uploadedPipe).then(() => {
+      setShowModal(true);
+      setTimeout(() => setShowModal(false), 3000); // Auto-hide modal after 3 seconds
+    }).catch((err) => {
+      console.error("Failed to copy content to clipboard:", err);
+    });
   };
 
   const renderTooltip = (index: number) => {
@@ -703,6 +697,22 @@ const App: React.FC = () => {
     textDecoration: 'underline',
     color: '#6366f1',
   };
+
+  const updateUploadedPipe = () => {
+    const newRows = uploadedMap.map((row) =>
+      row
+        .sort((a, b) => a.index - b.index)
+        .map((item) => item.value)
+        .join("|")
+    );
+    setUploadedRows(newRows);
+    setUploadedPipe(newRows.join("\n"));
+  };
+
+  // Sync uploadedPipe with uploadedMap changes
+  useEffect(() => {
+    updateUploadedPipe();
+  }, [uploadedMap]);
 
   return (
     <div style={{ maxWidth: 600, margin: "2rem auto", padding: 0 }}>
@@ -1250,7 +1260,7 @@ const App: React.FC = () => {
                                   );
                                   if (newValue !== null) {
                                     const updatedRows = [...uploadedRows];
-                                    const updatedRow = row.split("|");
+                                    const updatedRow = uploadedRows[rowIndex].split("|");
                                     updatedRow[index] = newValue;
                                     updatedRows[rowIndex] = updatedRow.join("|");
                                     setUploadedRows(updatedRows);
@@ -1263,6 +1273,7 @@ const App: React.FC = () => {
                                         : row
                                     );
                                     setUploadedMap(updatedMap);
+                                    updateUploadedPipe();
                                   }
                                 }}
                               >
