@@ -533,7 +533,7 @@ const App: React.FC = () => {
 
   const handleDownloadTemplateFile = () => {
     if (!uploadedPipe || !selectedTemplate) return;
-
+  
     const now = new Date();
     const pad = (n: number, len = 2) => n.toString().padStart(len, "0");
     const timestamp =
@@ -543,8 +543,15 @@ const App: React.FC = () => {
       pad(now.getHours()) +
       pad(now.getMinutes()) +
       pad(now.getSeconds());
-
-    const fileName = `${selectedTemplate}_${timestamp}.txt`;
+  
+    // กำหนด mapping ของชื่อ template ที่จะใช้ในไฟล์
+    const templatePrefixMap: { [key: string]: string } = {
+      "OTT Template": "OTT",
+      "TF Template": "TF"
+    };
+    const prefix = templatePrefixMap[selectedTemplate] || selectedTemplate.replace(/\s*Template$/, "");
+  
+    const fileName = `${prefix}_${timestamp}.txt`;
     const blob = new Blob([uploadedPipe], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
