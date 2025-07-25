@@ -704,9 +704,28 @@ const App: React.FC = () => {
 
   return (
     <div style={{ maxWidth: 600, margin: "2rem auto", padding: 0 }}>
+      {/* Add animated gradient background to the main container */}
       <div
         style={{
-          background: "linear-gradient(135deg, #e0e7ff 0%, #f9fafb 100%)",
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          background: "linear-gradient(135deg, #3b82f6, #10b981, #8b5cf6, #ef4444, #f59e0b)",
+          backgroundSize: "400% 400%",
+          animation: "gradientAnimation 30s ease infinite",
+          zIndex: -1,
+          maskImage: "radial-gradient(circle, rgba(0,0,0,0.5) 20%, rgba(0,0,0,0) 70%)",
+          maskSize: "100% 100%",
+          maskPosition: "center",
+          maskRepeat: "no-repeat",
+        }}
+      ></div>
+      <div
+        style={{
+          background: "rgba(255, 255, 255, 0.6)",
+          backdropFilter: "blur(10px)",
           borderRadius: 16,
           boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
           padding: 32,
@@ -745,6 +764,7 @@ const App: React.FC = () => {
               border: "1px solid #d1d5db",
               fontSize: 16,
               marginBottom: 8,
+              fontFamily: "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
             }}
           >
             <option value="">-- Select Template --</option>
@@ -832,6 +852,7 @@ const App: React.FC = () => {
                         borderRadius: 6,
                         border: "1px solid #d1d5db",
                         fontSize: 16,
+                        fontFamily: "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
                       }}
                     />
                     <input
@@ -845,18 +866,21 @@ const App: React.FC = () => {
                         borderRadius: 6,
                         border: "1px solid #d1d5db",
                         fontSize: 16,
+                        fontFamily: "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
                       }}
                     />
                     <button
                       onClick={handleAddConfig}
                       style={{
-                        background: "#6366f1",
+                        background: "linear-gradient(135deg, #6366f1, #4f46e5)",
                         color: "#fff",
                         border: "none",
                         borderRadius: 6,
                         padding: "8px 16px",
                         fontWeight: 600,
                         cursor: "pointer",
+                        boxShadow: "0 4px 12px rgba(99, 102, 241, 0.4)",
+                        transition: "transform 0.2s, box-shadow 0.2s",
                       }}
                     >
                       Add
@@ -1106,6 +1130,7 @@ const App: React.FC = () => {
                       fontSize: 15,
                       resize: "vertical",
                       marginBottom: 10,
+                      fontFamily: "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
                     }}
                   />
                   <button
@@ -1179,13 +1204,15 @@ const App: React.FC = () => {
                     </div>
                     <pre
                       style={{
-                        background: "#f3f4f6",
+                        background: "rgba(255, 255, 255, 0.6)",
+                        backdropFilter: "blur(10px)",
                         padding: 12,
                         borderRadius: 8,
                         fontSize: 15,
                         color: "#374151",
                         whiteSpace: "pre-wrap",
                         wordBreak: "break-all",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
                       }}
                     >
                       {uploadedRows.map((row, rowIndex) => (
@@ -1193,23 +1220,30 @@ const App: React.FC = () => {
                           {row.split("|").map((value, index, array) => (
                             <React.Fragment key={index}>
                               <span
-                                style={pipeStyle}
+                                style={{
+                                  cursor: "pointer",
+                                  textDecoration: "underline",
+                                  color: "#6366f1",
+                                }}
                                 title={renderTooltip(index)}
                                 onDoubleClick={() => {
                                   const configDescription = renderTooltip(index);
-                                  const newValue = prompt(`Edit value for pipe at index ${index+1} (${configDescription}):`, value);
+                                  const newValue = prompt(
+                                    `Edit value for pipe at index ${index + 1} (${configDescription}):`,
+                                    value
+                                  );
                                   if (newValue !== null) {
                                     const updatedRows = [...uploadedRows];
-                                    const updatedRow = row.split('|');
+                                    const updatedRow = row.split("|");
                                     updatedRow[index] = newValue;
-                                    updatedRows[rowIndex] = updatedRow.join('|');
+                                    updatedRows[rowIndex] = updatedRow.join("|");
                                     setUploadedRows(updatedRows);
 
                                     const updatedMap = uploadedMap.map((row, i) =>
                                       i === rowIndex
                                         ? row.map((item, idx) =>
-                                            idx === index ? { ...item, value: newValue } : item
-                                          )
+                                          idx === index ? { ...item, value: newValue } : item
+                                        )
                                         : row
                                     );
                                     setUploadedMap(updatedMap);
@@ -1218,7 +1252,9 @@ const App: React.FC = () => {
                               >
                                 {value}
                               </span>
-                              {index < array.length - 1 && <span style={{ color: '#374151' }}>|</span>}
+                              {index < array.length - 1 && (
+                                <span style={{ color: "#374151" }}>|</span>
+                              )}
                             </React.Fragment>
                           ))}
                         </div>
