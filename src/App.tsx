@@ -25,6 +25,7 @@ interface PipeConfig {
 }
 
 const App: React.FC = () => {
+  const [showModal, setShowModal] = useState(false);
   // Template configs
   const ottLabels = [
     "Record Type",
@@ -530,23 +531,25 @@ const App: React.FC = () => {
     setUploadedMap(mappedRows);
   };
 
-  const handleConvert = () => {
-    // Build pipe string from fieldValues, ordered by index
-    const maxIndex =
-      configs.length > 0 ? Math.max(...configs.map((cfg) => cfg.index)) : 0;
-    let result: string[] = [];
-    for (let i = 0; i <= maxIndex; i++) {
-      result.push(fieldValues[i] || "");
-    }
-    setPipeData(result.join("|"));
-  };
+  const handleDownloadTemplateFile = () => {
+    if (!uploadedPipe || !selectedTemplate) return;
 
-  const handleDownload = () => {
-    const blob = new Blob([pipeData], { type: "text/plain" });
+    const now = new Date();
+    const pad = (n: number, len = 2) => n.toString().padStart(len, "0");
+    const timestamp =
+      pad(now.getFullYear() % 100) +
+      pad(now.getMonth() + 1) +
+      pad(now.getDate()) + "_" +
+      pad(now.getHours()) +
+      pad(now.getMinutes()) +
+      pad(now.getSeconds());
+
+    const fileName = `${selectedTemplate}_${timestamp}.txt`;
+    const blob = new Blob([uploadedPipe], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "converted.txt";
+    a.download = fileName;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -624,6 +627,61 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem("pipeConfigs", JSON.stringify(configs));
   }, [configs]);
+
+  const handleUpdateSenderReferenceAndValueDate = () => {
+    const senderRefIdx = configs.find(
+      (cfg) =>
+        cfg.description.replace(/\s/g, "").toLowerCase() === "senderreference" ||
+        cfg.description.replace(/\s/g, "").toLowerCase() === "sender reference"
+    )?.index;
+    const valueDateIdx = configs.find(
+      (cfg) => cfg.description.replace(/\s/g, "").toLowerCase() === "valuedate"
+    )?.index;
+
+    if (senderRefIdx === undefined && valueDateIdx === undefined) return;
+
+    const now = new Date();
+    const pad = (n: number, len = 2) => n.toString().padStart(len, "0");
+    const senderRefValue =
+      pad(now.getFullYear() % 100) +
+      pad(now.getMonth() + 1) +
+      pad(now.getDate()) +
+      pad(now.getHours()) +
+      pad(now.getMinutes()) +
+      pad(now.getSeconds());
+    const valueDateValue =
+      now.getFullYear().toString() +
+      pad(now.getMonth() + 1) +
+      pad(now.getDate());
+
+    const newUploadedMap = uploadedMap.map((row) =>
+      row.map((item) => {
+        if (item.index === senderRefIdx) {
+          return { ...item, value: senderRefValue };
+        }
+        if (item.index === valueDateIdx) {
+          return { ...item, value: valueDateValue };
+        }
+        return item;
+      })
+    );
+    setUploadedMap(newUploadedMap);
+
+    const newRows = newUploadedMap.map((row) =>
+      row
+        .sort((a, b) => a.index - b.index)
+        .map((item) => item.value)
+        .join("|")
+    );
+    setUploadedRows(newRows);
+    setUploadedPipe(newRows.join("\n"));
+  };
+
+  const handleCopyToClipboard = () => {
+    navigator.clipboard.writeText(uploadedPipe);
+    setShowModal(true);
+    setTimeout(() => setShowModal(false), 3000); // Auto-hide modal after 3 seconds
+  };
 
   return (
     <div style={{ maxWidth: 600, margin: "2rem auto", padding: 0 }}>
@@ -892,7 +950,6 @@ const App: React.FC = () => {
                 </div>
               </div>
             )}
-            {/* Convert to Pipe Format section removed as requested */}
             {/* Convert Pipe Mapping Section - moved below main conversion UI */}
             <div
               style={{
@@ -1044,8 +1101,53 @@ const App: React.FC = () => {
               </div>
               {uploadedPipe && (
                 <div style={{ marginTop: 12 }}>
-                  <strong style={{ color: "#6366f1" }}>Raw Pipe Data:</strong>
                   <div style={{ position: "relative", marginBottom: 12 }}>
+                    <strong style={{ color: "#6366f1" }}>Raw Pipe Data:</strong>
+                    {/* Adjust button alignment */}
+                    <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 16 }}>
+                      <button
+                        onClick={handleDownloadTemplateFile}
+                        style={{
+                          background: '#6366f1',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: 6,
+                          padding: '8px 16px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Download File
+                      </button>
+                      <button
+                        onClick={handleUpdateSenderReferenceAndValueDate}
+                        style={{
+                          background: '#10b981',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: 6,
+                          padding: '8px 16px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Update Sender Reference & Value Date
+                      </button>
+                      <button
+                        onClick={handleCopyToClipboard}
+                        style={{
+                          background: '#f59e42',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: 6,
+                          padding: '8px 16px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Copy
+                      </button>
+                    </div>
                     <pre
                       style={{
                         background: "#f3f4f6",
@@ -1059,26 +1161,6 @@ const App: React.FC = () => {
                     >
                       {uploadedPipe}
                     </pre>
-                    <button
-                      onClick={() =>
-                        navigator.clipboard.writeText(uploadedPipe)
-                      }
-                      style={{
-                        position: "absolute",
-                        top: 12,
-                        right: 12,
-                        background: "#10b981",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: 6,
-                        padding: "6px 16px",
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-                      }}
-                    >
-                      Copy
-                    </button>
                   </div>
                   <strong style={{ color: "#6366f1" }}>Mapping:</strong>
                   {uploadedMap.map((row, i) => (
@@ -1222,6 +1304,25 @@ const App: React.FC = () => {
           </>
         )}
       </div>
+      {showModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            background: "#fff",
+            padding: "20px",
+            borderRadius: "8px",
+            boxShadow: "0 4px 24px rgba(0,0,0,0.1)",
+            zIndex: 1000,
+          }}
+        >
+          <p style={{ margin: 0, fontWeight: 600, color: "#10b981" }}>
+            Copied! You can paste it now.
+          </p>
+        </div>
+      )}
     </div>
   );
 };
