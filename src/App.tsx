@@ -716,9 +716,9 @@ const App: React.FC = () => {
           height: "100%",
           background: "linear-gradient(135deg, #3b82f6, #10b981, #8b5cf6, #ef4444, #f59e0b)",
           backgroundSize: "400% 400%",
-          animation: "gradientAnimation 30s ease infinite",
+          animation: "gradientAnimation 120s ease infinite",
           zIndex: -1,
-          maskImage: "radial-gradient(circle, rgba(0,0,0,0.5) 20%, rgba(0,0,0,0) 70%)",
+          maskImage: "radial-gradient(circle, rgba(0,0,0,0.5) 100%, rgba(0,0,0,0) 100%)",
           maskSize: "100% 100%",
           maskPosition: "center",
           maskRepeat: "no-repeat",
@@ -728,9 +728,12 @@ const App: React.FC = () => {
         style={{
           textAlign: 'center',
           marginBottom: 32,
-          fontSize: 32,
-          fontWeight: 'bold',
-          color: '#6366f1',
+          fontSize: 28,
+          fontWeight: 600,
+          background: 'linear-gradient(135deg, #3b82f6, #10b981, #8b5cf6)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          fontFamily: "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
         }}
       >
         Template Helper
@@ -1435,6 +1438,15 @@ const App: React.FC = () => {
           </p>
         </div>
       )}
+      <style>
+        {`
+          @keyframes gradientAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+          }
+        `}
+      </style>
     </div>
   );
 };
