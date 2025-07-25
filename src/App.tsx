@@ -690,6 +690,18 @@ const App: React.FC = () => {
     setTimeout(() => setShowModal(false), 3000); // Auto-hide modal after 3 seconds
   };
 
+  const renderTooltip = (index: number) => {
+    const config = configs.find((cfg) => cfg.index === index);
+    return config ? config.description : "Unknown";
+  };
+
+  // Highlight interactive elements with hover effect
+  const pipeStyle = {
+    cursor: 'pointer',
+    textDecoration: 'underline',
+    color: '#6366f1',
+  };
+
   return (
     <div style={{ maxWidth: 600, margin: "2rem auto", padding: 0 }}>
       <div
@@ -700,6 +712,16 @@ const App: React.FC = () => {
           padding: 32,
         }}
       >
+        {/* Help section */}
+        <div style={{ marginBottom: 24, background: '#f3f4f6', padding: 16, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+          <h3 style={{ color: '#6366f1', marginBottom: 12 }}>How to Use</h3>
+          <ul style={{ margin: 0, padding: 0, listStyle: 'none', color: '#374151', fontSize: 15 }}>
+            <li style={{ marginBottom: 8 }}>📌 Hover over pipe data to see descriptions.</li>
+            <li style={{ marginBottom: 8 }}>✏️ Double-click on pipe data to edit values.</li>
+            <li style={{ marginBottom: 8 }}>📋 Paste pipe-formatted text or upload a .txt file to start.</li>
+          </ul>
+        </div>
+
         {/* Template selection */}
         <div
           style={{
@@ -1166,7 +1188,41 @@ const App: React.FC = () => {
                         wordBreak: "break-all",
                       }}
                     >
-                      {uploadedPipe}
+                      {uploadedRows.map((row, rowIndex) => (
+                        <div key={rowIndex}>
+                          {row.split("|").map((value, index, array) => (
+                            <React.Fragment key={index}>
+                              <span
+                                style={pipeStyle}
+                                title={renderTooltip(index)}
+                                onDoubleClick={() => {
+                                  const configDescription = renderTooltip(index);
+                                  const newValue = prompt(`Edit value for pipe at index ${index+1} (${configDescription}):`, value);
+                                  if (newValue !== null) {
+                                    const updatedRows = [...uploadedRows];
+                                    const updatedRow = row.split('|');
+                                    updatedRow[index] = newValue;
+                                    updatedRows[rowIndex] = updatedRow.join('|');
+                                    setUploadedRows(updatedRows);
+
+                                    const updatedMap = uploadedMap.map((row, i) =>
+                                      i === rowIndex
+                                        ? row.map((item, idx) =>
+                                            idx === index ? { ...item, value: newValue } : item
+                                          )
+                                        : row
+                                    );
+                                    setUploadedMap(updatedMap);
+                                  }
+                                }}
+                              >
+                                {value}
+                              </span>
+                              {index < array.length - 1 && <span style={{ color: '#374151' }}>|</span>}
+                            </React.Fragment>
+                          ))}
+                        </div>
+                      ))}
                     </pre>
                   </div>
                   <strong style={{ color: "#6366f1" }}>Mapping:</strong>
