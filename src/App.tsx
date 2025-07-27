@@ -2,6 +2,29 @@ import React, { useState, useEffect } from "react";
 
 document.title = "Template Helper";
 
+// Type definitions for TypeScript support
+interface PipeConfig {
+  index: number;
+  description: string;
+}
+
+interface SavedConfigsType {
+  pipeConfigs: PipeConfig[];
+  pipeFieldValues: { [key: number]: string };
+  [key: string]: any;
+}
+
+interface MappedItem {
+  index: number;
+  value: string;
+  description: string;
+}
+
+interface TemplateConfigsType {
+  [key: string]: PipeConfig[];
+}
+
+// Utility functions with proper typing
 const detectDelimiter = (input: string): string => {
   const delimiters = [",", ";", "\t", ":"];
   let maxCount = 0;
@@ -21,15 +44,11 @@ const convertToPipe = (input: string): string => {
   return input.split(delim).join("|");
 };
 
-interface PipeConfig {
-  index: number;
-  description: string;
-}
-
 const App: React.FC = () => {
-  const [showModal, setShowModal] = useState(false);
-  // Template configs
-  const ottLabels = [
+  const [showModal, setShowModal] = useState<boolean>(false);
+
+  // Template configurations
+  const ottLabels: string[] = [
     "Record Type",
     "Record Seq",
     "Input File Name",
@@ -205,7 +224,8 @@ const App: React.FC = () => {
     "Filler",
     "EndRecord",
   ];
-  const tfLabels = [
+
+  const tfLabels: string[] = [
     "Product type",
     "ProductTypeCode",
     "TransactionTypeCode",
@@ -397,7 +417,8 @@ const App: React.FC = () => {
     "Filler",
     "EndRecord",
   ];
-  const templateConfigs: { [key: string]: PipeConfig[] } = {
+
+  const templateConfigs: TemplateConfigsType = {
     "OTT Template": ottLabels.map((desc, i) => ({
       index: i,
       description: desc,
@@ -405,32 +426,59 @@ const App: React.FC = () => {
     "TF Template": tfLabels.map((desc, i) => ({ index: i, description: desc })),
   };
 
+  // State management with proper typing
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
-
-  // Handle template selection
-  const handleSelectTemplate = (template: string) => {
-    setSelectedTemplate(template);
-    // Load config for template from localStorage if exists, else use default
-    const saved = localStorage.getItem("pipeConfigs_" + template);
-    if (saved) {
-      setConfigs(JSON.parse(saved));
-      localStorage.setItem("pipeConfigs", saved);
-    } else {
-      setConfigs(templateConfigs[template] || []);
-      localStorage.setItem(
-        "pipeConfigs",
-        JSON.stringify(templateConfigs[template] || [])
-      );
-    }
-  };
-  // State for editing uploaded mapping
   const [editRowIdx, setEditRowIdx] = useState<number | null>(null);
   const [editRowValues, setEditRowValues] = useState<{ [key: number]: string }>(
     {}
   );
 
-  // Start editing a row
-  const handleEditUploadedRow = (rowIdx: number) => {
+  // localStorage storage for persistence
+  const [savedConfigs, setSavedConfigs] = useState<SavedConfigsType>(() => {
+    try {
+      const saved = localStorage.getItem('templateHelperConfigs');
+      return saved ? JSON.parse(saved) : {
+        pipeConfigs: [],
+        pipeFieldValues: {},
+      };
+    } catch {
+      return {
+        pipeConfigs: [],
+        pipeFieldValues: {},
+      };
+    }
+  });
+
+  const [pipeData, setPipeData] = useState<string>("");
+  const [configs, setConfigs] = useState<PipeConfig[]>([]);
+  const [configIndex, setConfigIndex] = useState<string>("");
+  const [configDesc, setConfigDesc] = useState<string>("");
+  const [editIdx, setEditIdx] = useState<number | null>(null);
+  const [editDesc, setEditDesc] = useState<string>("");
+  const [showConfig, setShowConfig] = useState<boolean>(false);
+  const [fieldValues, setFieldValues] = useState<{ [key: number]: string }>({});
+  const [uploadedPipe, setUploadedPipe] = useState<string>("");
+  const [uploadedRows, setUploadedRows] = useState<string[]>([]);
+  const [uploadedMap, setUploadedMap] = useState<MappedItem[][]>([]);
+  const [pastedPipe, setPastedPipe] = useState<string>("");
+
+  // Handler functions with proper typing
+  const handleSelectTemplate = (template: string): void => {
+    setSelectedTemplate(template);
+    const saved = savedConfigs["pipeConfigs_" + template] as
+      | PipeConfig[]
+      | undefined;
+    if (saved && saved.length > 0) {
+      setConfigs(saved);
+      setSavedConfigs((prev) => ({ ...prev, pipeConfigs: saved }));
+    } else {
+      const defaultConfigs = templateConfigs[template] || [];
+      setConfigs(defaultConfigs);
+      setSavedConfigs((prev) => ({ ...prev, pipeConfigs: defaultConfigs }));
+    }
+  };
+
+  const handleEditUploadedRow = (rowIdx: number): void => {
     const row = uploadedMap[rowIdx];
     const values: { [key: number]: string } = {};
     row.forEach((item) => {
@@ -440,8 +488,7 @@ const App: React.FC = () => {
     setEditRowValues(values);
   };
 
-  // Save edited row values
-  const handleSaveUploadedRow = () => {
+  const handleSaveUploadedRow = (): void => {
     if (editRowIdx === null) return;
     const newUploadedMap = uploadedMap.map((row, i) => {
       if (i !== editRowIdx) return row;
@@ -451,40 +498,17 @@ const App: React.FC = () => {
       }));
     });
     setUploadedMap(newUploadedMap);
-    updateUploadedPipe(); // Ensure uploadedPipe updates after saving
+    updateUploadedPipe();
     setEditRowIdx(null);
     setEditRowValues({});
   };
 
-  // Cancel editing
-  const handleCancelEditUploadedRow = () => {
+  const handleCancelEditUploadedRow = (): void => {
     setEditRowIdx(null);
     setEditRowValues({});
   };
-  const [pipeData, setPipeData] = useState("");
-  const [configs, setConfigs] = useState<PipeConfig[]>(() => {
-    const saved = localStorage.getItem("pipeConfigs");
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [configIndex, setConfigIndex] = useState("");
-  const [configDesc, setConfigDesc] = useState("");
-  const [editIdx, setEditIdx] = useState<number | null>(null);
-  const [editDesc, setEditDesc] = useState("");
-  const [showConfig, setShowConfig] = useState(false);
-  const [fieldValues, setFieldValues] = useState<{ [key: number]: string }>(
-    () => {
-      const saved = localStorage.getItem("pipeFieldValues");
-      return saved ? JSON.parse(saved) : {};
-    }
-  );
-  const [uploadedPipe, setUploadedPipe] = useState<string>("");
-  const [uploadedRows, setUploadedRows] = useState<string[]>([]);
-  const [uploadedMap, setUploadedMap] = useState<
-    { index: number; value: string; description: string }[][]
-  >([]);
-  const [pastedPipe, setPastedPipe] = useState<string>("");
-  // Handle file upload and parse pipe format (multi-row)
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
@@ -495,19 +519,17 @@ const App: React.FC = () => {
     reader.readAsText(file);
   };
 
-  // Handle pasted pipe text
-  const handlePastePipe = () => {
+  const handlePastePipe = (): void => {
     if (pastedPipe.trim()) {
       processPipeMapping(pastedPipe);
     }
   };
 
-  // Common function to process pipe mapping text
-  const processPipeMapping = (text: string) => {
+  const processPipeMapping = (text: string): void => {
     setUploadedPipe(text);
-    const rows = text.split(/\r?\n/).filter((r) => r.trim() !== "");
+    const rows = text.split(/\r?\n/).filter((r: string) => r.trim() !== "");
     setUploadedRows(rows);
-    const mappedRows = rows.map((row) => {
+    const mappedRows = rows.map((row: string) => {
       const values = row.split("|");
       return configs
         .sort((a, b) => a.index - b.index)
@@ -520,26 +542,28 @@ const App: React.FC = () => {
     setUploadedMap(mappedRows);
   };
 
-  const handleDownloadTemplateFile = () => {
+  const handleDownloadTemplateFile = (): void => {
     if (!uploadedPipe || !selectedTemplate) return;
-  
+
     const now = new Date();
-    const pad = (n: number, len = 2) => n.toString().padStart(len, "0");
+    const pad = (n: number, len = 2): string => n.toString().padStart(len, "0");
     const timestamp =
       pad(now.getFullYear() % 100) +
       pad(now.getMonth() + 1) +
-      pad(now.getDate()) + "_" +
+      pad(now.getDate()) +
+      "_" +
       pad(now.getHours()) +
       pad(now.getMinutes()) +
       pad(now.getSeconds());
-  
-    // กำหนด mapping ของชื่อ template ที่จะใช้ในไฟล์
+
     const templatePrefixMap: { [key: string]: string } = {
       "OTT Template": "OTT",
-      "TF Template": "TF"
+      "TF Template": "TF",
     };
-    const prefix = templatePrefixMap[selectedTemplate] || selectedTemplate.replace(/\s*Template$/, "");
-  
+    const prefix =
+      templatePrefixMap[selectedTemplate] ||
+      selectedTemplate.replace(/\s*Template$/, "");
+
     const fileName = `${prefix}_${timestamp}.txt`;
     const blob = new Blob([uploadedPipe], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
@@ -550,37 +574,31 @@ const App: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  // Save fieldValues to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem("pipeFieldValues", JSON.stringify(fieldValues));
-  }, [fieldValues]);
-
-  const handleAddConfig = () => {
+  const handleAddConfig = (): void => {
     const idx = parseInt(configIndex, 10) - 1;
     if (!isNaN(idx) && configDesc.trim()) {
-      // Prevent duplicate index
       if (configs.some((cfg) => cfg.index === idx)) return;
       const newConfigs = [...configs, { index: idx, description: configDesc }];
       setConfigs(newConfigs);
-      localStorage.setItem("pipeConfigs", JSON.stringify(newConfigs));
+      setSavedConfigs((prev) => ({ ...prev, pipeConfigs: newConfigs }));
       if (selectedTemplate) {
-        localStorage.setItem(
-          "pipeConfigs_" + selectedTemplate,
-          JSON.stringify(newConfigs)
-        );
+        setSavedConfigs((prev) => ({
+          ...prev,
+          ["pipeConfigs_" + selectedTemplate]: newConfigs,
+        }));
       }
       setConfigIndex("");
       setConfigDesc("");
     }
   };
 
-  const handleEditConfig = (idx: number, desc: string) => {
+  const handleEditConfig = (idx: number, desc: string): void => {
     setEditIdx(idx);
     setEditDesc(desc);
     setConfigIndex((idx + 1).toString());
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = (): void => {
     if (editIdx !== null && editDesc.trim()) {
       const idx = parseInt(configIndex, 10) - 1;
       const newConfigs = configs.map((cfg) =>
@@ -589,12 +607,12 @@ const App: React.FC = () => {
           : cfg
       );
       setConfigs(newConfigs);
-      localStorage.setItem("pipeConfigs", JSON.stringify(newConfigs));
+      setSavedConfigs((prev) => ({ ...prev, pipeConfigs: newConfigs }));
       if (selectedTemplate) {
-        localStorage.setItem(
-          "pipeConfigs_" + selectedTemplate,
-          JSON.stringify(newConfigs)
-        );
+        setSavedConfigs((prev) => ({
+          ...prev,
+          ["pipeConfigs_" + selectedTemplate]: newConfigs,
+        }));
       }
       setEditIdx(null);
       setEditDesc("");
@@ -602,32 +620,28 @@ const App: React.FC = () => {
     }
   };
 
-  const handleDeleteConfig = (idx: number) => {
+  const handleDeleteConfig = (idx: number): void => {
     const newConfigs = configs.filter((cfg) => cfg.index !== idx);
     setConfigs(newConfigs);
-    localStorage.setItem("pipeConfigs", JSON.stringify(newConfigs));
+    setSavedConfigs((prev) => ({ ...prev, pipeConfigs: newConfigs }));
     if (selectedTemplate) {
-      localStorage.setItem(
-        "pipeConfigs_" + selectedTemplate,
-        JSON.stringify(newConfigs)
-      );
+      setSavedConfigs((prev) => ({
+        ...prev,
+        ["pipeConfigs_" + selectedTemplate]: newConfigs,
+      }));
     }
-    // Remove field value for deleted index
     setFieldValues((prev) => {
       const copy = { ...prev };
       delete copy[idx];
       return copy;
     });
   };
-  // Sync configs to localStorage on change
-  useEffect(() => {
-    localStorage.setItem("pipeConfigs", JSON.stringify(configs));
-  }, [configs]);
 
-  const handleUpdateSenderReferenceAndValueDate = () => {
+  const handleUpdateSenderReferenceAndValueDate = (): void => {
     const senderRefIdx = configs.find(
       (cfg) =>
-        cfg.description.replace(/\s/g, "").toLowerCase() === "senderreference" ||
+        cfg.description.replace(/\s/g, "").toLowerCase() ===
+          "senderreference" ||
         cfg.description.replace(/\s/g, "").toLowerCase() === "sender reference"
     )?.index;
     const valueDateIdx = configs.find(
@@ -637,7 +651,7 @@ const App: React.FC = () => {
     if (senderRefIdx === undefined && valueDateIdx === undefined) return;
 
     const now = new Date();
-    const pad = (n: number, len = 2) => n.toString().padStart(len, "0");
+    const pad = (n: number, len = 2): string => n.toString().padStart(len, "0");
     const senderRefBaseValue =
       pad(now.getFullYear() % 100) +
       pad(now.getMonth() + 1) +
@@ -673,32 +687,28 @@ const App: React.FC = () => {
     setUploadedPipe(newRows.join("\n"));
   };
 
-  const handleCopyToClipboard = () => {
+  const handleCopyToClipboard = (): void => {
     if (!uploadedPipe.trim()) {
       console.error("No content to copy.");
       return;
     }
-    navigator.clipboard.writeText(uploadedPipe).then(() => {
-      setShowModal(true);
-      setTimeout(() => setShowModal(false), 3000); // Auto-hide modal after 3 seconds
-    }).catch((err) => {
-      console.error("Failed to copy content to clipboard:", err);
-    });
+    navigator.clipboard
+      .writeText(uploadedPipe)
+      .then(() => {
+        setShowModal(true);
+        setTimeout(() => setShowModal(false), 2000);
+      })
+      .catch((err) => {
+        console.error("Failed to copy content to clipboard:", err);
+      });
   };
 
-  const renderTooltip = (index: number) => {
+  const renderTooltip = (index: number): string => {
     const config = configs.find((cfg) => cfg.index === index);
     return config ? config.description : "Unknown";
   };
 
-  // Highlight interactive elements with hover effect
-  const pipeStyle = {
-    cursor: 'pointer',
-    textDecoration: 'underline',
-    color: '#6366f1',
-  };
-
-  const updateUploadedPipe = () => {
+  const updateUploadedPipe = (): void => {
     const newRows = uploadedMap.map((row) =>
       row
         .sort((a, b) => a.index - b.index)
@@ -709,155 +719,370 @@ const App: React.FC = () => {
     setUploadedPipe(newRows.join("\n"));
   };
 
-  // Sync uploadedPipe with uploadedMap changes
+  // Effects with proper dependency arrays
+  useEffect(() => {
+    setSavedConfigs((prev) => ({ ...prev, pipeFieldValues: fieldValues }));
+  }, [fieldValues]);
+
+  useEffect(() => {
+    setSavedConfigs((prev) => ({ ...prev, pipeConfigs: configs }));
+  }, [configs]);
+
   useEffect(() => {
     updateUploadedPipe();
   }, [uploadedMap]);
 
-  return (
-    <div style={{ maxWidth: 600, margin: "2rem auto", padding: 0 }}>
-      {/* Add animated gradient background to the main container */}
-      <div
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          background: "linear-gradient(135deg, #3b82f6, #10b981, #8b5cf6, #ef4444, #f59e0b)",
-          backgroundSize: "400% 400%",
-          animation: "gradientAnimation 120s ease infinite",
-          zIndex: -1,
-          maskImage: "radial-gradient(circle, rgba(0,0,0,0.5) 100%, rgba(0,0,0,0) 100%)",
-          maskSize: "100% 100%",
-          maskPosition: "center",
-          maskRepeat: "no-repeat",
-        }}
-      ></div>
-      <div
-        style={{
-          textAlign: 'center',
-          marginBottom: 32,
-          fontSize: 28,
-          fontWeight: 600,
-          background: 'linear-gradient(135deg, #3b82f6, #10b981, #8b5cf6)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          fontFamily: "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-        }}
-      >
-        Template Helper
-      </div>
-      <div
-        style={{
-          background: "rgba(255, 255, 255, 0.6)",
-          backdropFilter: "blur(10px)",
-          borderRadius: 16,
-          boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
-          padding: 32,
-        }}
-      >
-        {/* Help section */}
-        <div style={{ marginBottom: 24, background: '#f3f4f6', padding: 16, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-          <h3 style={{ color: '#6366f1', marginBottom: 12 }}>How to Use</h3>
-          <ul style={{ margin: 0, padding: 0, listStyle: 'none', color: '#374151', fontSize: 15 }}>
-            <li style={{ marginBottom: 8 }}>📌 Hover over pipe data to see descriptions.</li>
-            <li style={{ marginBottom: 8 }}>✏️ Double-click on pipe data to edit values.</li>
-            <li style={{ marginBottom: 8 }}>📋 Paste pipe-formatted text or upload a .txt file to start.</li>
-          </ul>
-        </div>
+  // Update uploaded map descriptions when configs change
+  useEffect(() => {
+    if (uploadedRows.length > 0 && configs.length > 0) {
+      const updatedMap = uploadedRows.map((row: string) => {
+        const values = row.split("|");
+        return configs
+          .sort((a, b) => a.index - b.index)
+          .map((cfg) => ({
+            index: cfg.index,
+            value: values[cfg.index] || "",
+            description: cfg.description,
+          }));
+      });
+      setUploadedMap(updatedMap);
+    }
+  }, [configs, uploadedRows]);
 
-        {/* Template selection */}
+  // Save to localStorage whenever savedConfigs changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('templateHelperConfigs', JSON.stringify(savedConfigs));
+    } catch (error) {
+      console.error('Failed to save configs to localStorage:', error);
+    }
+  }, [savedConfigs]);
+
+  // Apple Liquid Glass design system styles
+  const liquidGlassStyle: React.CSSProperties = {
+    background: "rgba(255, 255, 255, 0.08)",
+    backdropFilter: "blur(20px) saturate(180%)",
+    WebkitBackdropFilter: "blur(20px) saturate(180%)",
+    border: "1px solid rgba(255, 255, 255, 0.125)",
+    borderRadius: "24px",
+    boxShadow:
+      "0 8px 32px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+  };
+
+  const liquidButtonStyle: React.CSSProperties = {
+    background:
+      "linear-gradient(145deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05))",
+    backdropFilter: "blur(16px) saturate(180%)",
+    WebkitBackdropFilter: "blur(16px) saturate(180%)",
+    border: "1px solid rgba(255, 255, 255, 0.18)",
+    borderRadius: "16px",
+    color: "rgba(255, 255, 255, 0.95)",
+    fontWeight: "600",
+    fontSize: "15px",
+    padding: "12px 24px",
+    cursor: "pointer",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    boxShadow:
+      "0 4px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+    fontFamily:
+      '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif',
+  };
+
+  const liquidInputStyle: React.CSSProperties = {
+    background: "rgba(255, 255, 255, 0.1)",
+    backdropFilter: "blur(16px) saturate(180%)",
+    WebkitBackdropFilter: "blur(16px) saturate(180%)",
+    border: "1px solid rgba(255, 255, 255, 0.15)",
+    borderRadius: "12px",
+    color: "rgba(255, 255, 255, 0.95)",
+    fontSize: "16px",
+    padding: "12px 16px",
+    outline: "none",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    fontFamily:
+      '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif',
+  };
+
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        height: "100%",
+        width: "100%",
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background:
+          "linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%)",
+        backgroundSize: "400% 400%",
+        animation: "gradientFlow 120s ease infinite",
+        fontFamily:
+          '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif',
+        overflow: "auto",
+      }}
+    >
+      <div style={{ 
+        maxWidth: "900px", 
+        margin: "0 auto", 
+        padding: "20px",
+        paddingBottom: "40px" 
+      }}>
+        {/* Enhanced Main Title with Version Badge */}
         <div
           style={{
-            marginBottom: 24,
-            background: "#fff",
-            padding: 20,
-            borderRadius: 12,
-            boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+            textAlign: "center",
+            marginBottom: "40px",
+            padding: "40px",
+            ...liquidGlassStyle,
+            position: "relative",
           }}
         >
-          <h3 style={{ color: "#6366f1", marginBottom: 12 }}>
-            Select Config Template 💁🏻 
+          <h1
+            style={{
+              fontSize: "48px",
+              fontWeight: "800",
+              margin: "0",
+              background:
+                "linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.7) 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              letterSpacing: "-2px",
+              textShadow: "0 4px 16px rgba(0,0,0,0.1)",
+            }}
+          >
+            Template Helper
+          </h1>
+        </div>
+
+        {/* Enhanced Help Section */}
+        <div
+          style={{
+            ...liquidGlassStyle,
+            padding: "32px",
+            marginBottom: "32px",
+          }}
+        >
+          <h3
+            style={{
+              color: "rgba(255,255,255,0.95)",
+              fontSize: "22px",
+              fontWeight: "700",
+              marginBottom: "20px",
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+            }}
+          >
+            <span style={{ fontSize: "28px" }}>💡</span>
+            Quick Start Guide
+          </h3>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+              gap: "16px",
+              color: "rgba(255,255,255,0.85)",
+              fontSize: "16px",
+              lineHeight: "1.6",
+            }}
+          >
+            <div
+              style={{
+                padding: "20px",
+                background: "rgba(255, 255, 255, 0.05)",
+                borderRadius: "16px",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+              }}
+            >
+              <div style={{ fontSize: "24px", marginBottom: "12px" }}>🎯</div>
+              <strong style={{ color: "rgba(255,255,255,0.95)" }}>
+                Interactive Data
+              </strong>
+              <br />
+              Hover over pipe data to see field descriptions
+            </div>
+            <div
+              style={{
+                padding: "20px",
+                background: "rgba(255, 255, 255, 0.05)",
+                borderRadius: "16px",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+              }}
+            >
+              <div style={{ fontSize: "24px", marginBottom: "12px" }}>✨</div>
+              <strong style={{ color: "rgba(255,255,255,0.95)" }}>
+                Quick Edit
+              </strong>
+              <br />
+              Double-click on any pipe value to edit instantly
+            </div>
+            <div
+              style={{
+                padding: "20px",
+                background: "rgba(255, 255, 255, 0.05)",
+                borderRadius: "16px",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+              }}
+            >
+              <div style={{ fontSize: "24px", marginBottom: "12px" }}>📋</div>
+              <strong style={{ color: "rgba(255,255,255,0.95)" }}>
+                Import Data
+              </strong>
+              <br />
+              Upload .txt files or paste pipe-formatted text
+            </div>
+          </div>
+        </div>
+
+        {/* Enhanced Template Selection */}
+        <div
+          style={{
+            ...liquidGlassStyle,
+            padding: "32px",
+            marginBottom: "32px",
+          }}
+        >
+          <h3
+            style={{
+              color: "rgba(255,255,255,0.95)",
+              fontSize: "22px",
+              fontWeight: "700",
+              marginBottom: "24px",
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+            }}
+          >
+            <span style={{ fontSize: "28px" }}>⚙️</span>
+            Template Configuration
           </h3>
           <select
             value={selectedTemplate}
             onChange={(e) => handleSelectTemplate(e.target.value)}
             style={{
+              ...liquidInputStyle,
               width: "100%",
-              padding: 10,
-              borderRadius: 8,
-              border: "1px solid #d1d5db",
-              fontSize: 16,
-              marginBottom: 8,
-              fontFamily: "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+              marginBottom: "20px",
+              fontSize: "18px",
+              padding: "16px 20px",
             }}
           >
-            <option value="">-- Select Template --</option>
+            <option value="" style={{ background: "#1a1a1a", color: "#fff" }}>
+              🎯 Select Your Template
+            </option>
             {Object.keys(templateConfigs).map((tpl) => (
-              <option key={tpl} value={tpl}>
+              <option
+                key={tpl}
+                value={tpl}
+                style={{ background: "#1a1a1a", color: "#fff" }}
+              >
                 {tpl}
               </option>
             ))}
           </select>
           {selectedTemplate && (
-            <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+            <div style={{ 
+              display: "flex", 
+              gap: "16px", 
+              flexWrap: "wrap", 
+              justifyContent: "center",
+              marginTop: "24px" 
+            }}>
               <button
                 onClick={() => {
-                  localStorage.removeItem("pipeConfigs_" + selectedTemplate);
-                  setConfigs(templateConfigs[selectedTemplate] || []);
-                  localStorage.setItem(
-                    "pipeConfigs",
-                    JSON.stringify(templateConfigs[selectedTemplate] || [])
-                  );
+                  setSavedConfigs((prev) => {
+                    const newConfigs = { ...prev };
+                    delete newConfigs["pipeConfigs_" + selectedTemplate];
+                    return newConfigs;
+                  });
+                  const defaultConfigs =
+                    templateConfigs[selectedTemplate] || [];
+                  setConfigs(defaultConfigs);
+                  setSavedConfigs((prev) => ({
+                    ...prev,
+                    pipeConfigs: defaultConfigs,
+                  }));
                 }}
                 style={{
-                  background: "#ef4444",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: 6,
-                  padding: "8px 16px",
-                  fontWeight: 600,
-                  cursor: "pointer",
+                  ...liquidButtonStyle,
+                  background:
+                    "linear-gradient(145deg, rgba(239, 68, 68, 0.3), rgba(239, 68, 68, 0.2))",
+                  fontSize: "14px",
+                  padding: "12px 20px",
+                  minWidth: "160px",
+                  whiteSpace: "nowrap",
                 }}
               >
-                Use default config for {selectedTemplate}
+                🔄 Reset to Default
               </button>
               <button
                 onClick={() => setShowConfig((prev) => !prev)}
                 style={{
-                  background: showConfig ? "#ef4444" : "#6366f1",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: 6,
-                  padding: "8px 16px",
-                  fontWeight: 600,
-                  cursor: "pointer",
+                  ...liquidButtonStyle,
+                  background: showConfig
+                    ? "linear-gradient(145deg, rgba(239, 68, 68, 0.3), rgba(239, 68, 68, 0.2))"
+                    : "linear-gradient(145deg, rgba(99, 102, 241, 0.3), rgba(99, 102, 241, 0.2))",
+                  fontSize: "14px",
+                  padding: "12px 20px",
+                  minWidth: "140px",
+                  whiteSpace: "nowrap",
                 }}
               >
-                {showConfig ? "Hide Pipe Index Config" : "Edit Config"}
+                {showConfig ? "👁️ Hide Config" : "🔧 Edit Config"}
               </button>
             </div>
           )}
         </div>
+
         {selectedTemplate && (
           <>
-            {/* Pipe Index Config - hidden by default, toggled by button above */}
+            {/* Enhanced Pipe Index Config */}
             {showConfig && (
-              <div style={{ marginBottom: 16 }}>
-                <div
+              <div
+                style={{
+                  ...liquidGlassStyle,
+                  padding: "32px",
+                  marginBottom: "32px",
+                }}
+              >
+                <h3
                   style={{
-                    background: "#fff",
-                    padding: 24,
-                    borderRadius: 12,
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                    color: "rgba(255,255,255,0.95)",
+                    fontSize: "22px",
+                    fontWeight: "700",
+                    marginBottom: "28px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
                   }}
                 >
-                  <h3 style={{ color: "#6366f1", marginBottom: 12 }}>
-                    Pipe Index Config
-                  </h3>
-              
-                  <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+                  <span style={{ fontSize: "28px" }}>🔧</span>
+                  Advanced Pipe Configuration
+                </h3>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "auto 1fr auto",
+                    gap: "16px",
+                    marginBottom: "28px",
+                    alignItems: "end",
+                  }}
+                >
+                  <div>
+                    <label
+                      style={{
+                        display: "block",
+                        color: "rgba(255,255,255,0.8)",
+                        fontSize: "14px",
+                        marginBottom: "8px",
+                        fontWeight: "600",
+                      }}
+                    >
+                      Index Position
+                    </label>
                     <input
                       type="number"
                       min={1}
@@ -871,94 +1096,134 @@ const App: React.FC = () => {
                           setConfigIndex(val);
                         }
                       }}
-                      placeholder="Pipe Index"
+                      placeholder="Index #"
                       style={{
-                        width: 120,
-                        padding: 8,
-                        borderRadius: 6,
-                        border: "1px solid #d1d5db",
-                        fontSize: 16,
-                        fontFamily: "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                        ...liquidInputStyle,
+                        width: "120px",
+                        textAlign: "center",
                       }}
                     />
+                  </div>
+                  <div>
+                    <label
+                      style={{
+                        display: "block",
+                        color: "rgba(255,255,255,0.8)",
+                        fontSize: "14px",
+                        marginBottom: "8px",
+                        fontWeight: "600",
+                      }}
+                    >
+                      Field Description
+                    </label>
                     <input
                       type="text"
                       value={configDesc}
                       onChange={(e) => setConfigDesc(e.target.value)}
-                      placeholder="Description"
+                      placeholder="Enter field description..."
                       style={{
-                        flex: 1,
-                        padding: 8,
-                        borderRadius: 6,
-                        border: "1px solid #d1d5db",
-                        fontSize: 16,
-                        fontFamily: "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                        ...liquidInputStyle,
+                        width: "calc(100% - 16px)",
+                        boxSizing: "border-box",
                       }}
                     />
-                    <button
-                      onClick={handleAddConfig}
+                  </div>
+                  <button
+                    onClick={handleAddConfig}
+                    style={{
+                      ...liquidButtonStyle,
+                      background:
+                        "linear-gradient(145deg, rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.2))",
+                      fontSize: "14px",
+                      padding: "12px 16px",
+                      height: "fit-content",
+                    }}
+                  >
+                    ➕ Add
+                  </button>
+                </div>
+
+                {configs.length > 0 && (
+                  <div
+                    style={{
+                      maxHeight: "400px",
+                      overflowY: "auto",
+                      background: "rgba(0, 0, 0, 0.1)",
+                      borderRadius: "16px",
+                      padding: "16px",
+                    }}
+                  >
+                    <h4
                       style={{
-                        background: "linear-gradient(135deg, #6366f1, #4f46e5)",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: 6,
-                        padding: "8px 16px",
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        boxShadow: "0 4px 12px rgba(99, 102, 241, 0.4)",
-                        transition: "transform 0.2s, box-shadow 0.2s",
+                        color: "rgba(255,255,255,0.9)",
+                        fontSize: "16px",
+                        fontWeight: "600",
+                        marginBottom: "16px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
                       }}
                     >
-                      Add
-                    </button>
-                  </div>
-                  {configs.length > 0 && (
-                    <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
-                      {configs
-                        .sort((a, b) => a.index - b.index)
-                        .map((cfg) => (
-                          <li
-                            key={cfg.index}
+                      📋 Current Configuration ({configs.length} fields)
+                    </h4>
+                    {configs
+                      .sort((a, b) => a.index - b.index)
+                      .map((cfg) => (
+                        <div
+                          key={cfg.index}
+                          style={{
+                            marginBottom: "12px",
+                            padding: "20px",
+                            background: "rgba(255, 255, 255, 0.05)",
+                            backdropFilter: "blur(8px)",
+                            borderRadius: "16px",
+                            border: "1px solid rgba(255, 255, 255, 0.1)",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "16px",
+                            flexWrap: "wrap",
+                            transition: "all 0.3s ease",
+                          }}
+                        >
+                          <div
                             style={{
-                              marginBottom: 8,
-                              display: "flex",
-                              alignItems: "center",
-                              background: "#f3f4f6",
-                              borderRadius: 6,
+                              background:
+                                "linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.3))",
+                              color: "rgba(255,255,255,0.95)",
+                              fontWeight: "700",
+                              fontSize: "14px",
                               padding: "8px 12px",
+                              borderRadius: "8px",
+                              minWidth: "80px",
+                              textAlign: "center",
                             }}
                           >
-                            <strong style={{ color: "#6366f1" }}>
-                              Index {cfg.index + 1}:
-                            </strong>
-                            {editIdx === cfg.index ? (
-                              <>
-                                <input
-                                  type="text"
-                                  value={editDesc}
-                                  onChange={(e) => setEditDesc(e.target.value)}
-                                  style={{
-                                    marginLeft: 8,
-                                    padding: 4,
-                                    borderRadius: 4,
-                                    border: "1px solid #d1d5db",
-                                    fontSize: 15,
-                                  }}
-                                />
+                            #{cfg.index + 1}
+                          </div>
+                          {editIdx === cfg.index ? (
+                            <>
+                              <input
+                                type="text"
+                                value={editDesc}
+                                onChange={(e) => setEditDesc(e.target.value)}
+                                style={{
+                                  ...liquidInputStyle,
+                                  flex: 1,
+                                  minWidth: "250px",
+                                }}
+                              />
+                              <div style={{ display: "flex", gap: "8px" }}>
                                 <button
                                   onClick={handleSaveEdit}
                                   style={{
-                                    marginLeft: 8,
-                                    background: "#10b981",
-                                    color: "#fff",
-                                    border: "none",
-                                    borderRadius: 4,
-                                    padding: "4px 12px",
-                                    fontWeight: 500,
-                                    cursor: "pointer",
+                                    ...liquidButtonStyle,
+                                    background:
+                                      "linear-gradient(145deg, rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.2))",
+                                    padding: "8px 16px",
+                                    fontSize: "14px",
                                   }}
                                 >
-                                  Save
+                                  💾 Save
                                 </button>
                                 <button
                                   onClick={() => {
@@ -966,24 +1231,30 @@ const App: React.FC = () => {
                                     setEditDesc("");
                                   }}
                                   style={{
-                                    marginLeft: 4,
-                                    background: "#f59e42",
-                                    color: "#fff",
-                                    border: "none",
-                                    borderRadius: 4,
-                                    padding: "4px 12px",
-                                    fontWeight: 500,
-                                    cursor: "pointer",
+                                    ...liquidButtonStyle,
+                                    background:
+                                      "linear-gradient(145deg, rgba(245, 158, 11, 0.3), rgba(245, 158, 11, 0.2))",
+                                    padding: "8px 16px",
+                                    fontSize: "14px",
                                   }}
                                 >
-                                  Cancel
+                                  ❌ Cancel
                                 </button>
-                              </>
-                            ) : (
-                              <>
-                                <span style={{ marginLeft: 8 }}>
-                                  {cfg.description}
-                                </span>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <span
+                                style={{
+                                  color: "rgba(255,255,255,0.9)",
+                                  flex: 1,
+                                  fontSize: "15px",
+                                  fontWeight: "500",
+                                }}
+                              >
+                                {cfg.description}
+                              </span>
+                              <div style={{ display: "flex", gap: "8px" }}>
                                 <button
                                   onClick={() => {
                                     setShowConfig(true);
@@ -993,117 +1264,127 @@ const App: React.FC = () => {
                                     );
                                   }}
                                   style={{
-                                    marginLeft: 8,
-                                    background: "#6366f1",
-                                    color: "#fff",
-                                    border: "none",
-                                    borderRadius: 4,
-                                    padding: "4px 12px",
-                                    fontWeight: 500,
-                                    cursor: "pointer",
+                                    ...liquidButtonStyle,
+                                    background:
+                                      "linear-gradient(145deg, rgba(99, 102, 241, 0.3), rgba(99, 102, 241, 0.2))",
+                                    padding: "8px 16px",
+                                    fontSize: "14px",
                                   }}
                                 >
-                                  Edit
+                                  ✏️ Edit
                                 </button>
                                 <button
                                   onClick={() => handleDeleteConfig(cfg.index)}
                                   style={{
-                                    marginLeft: 4,
-                                    background: "#ef4444",
-                                    color: "#fff",
-                                    border: "none",
-                                    borderRadius: 4,
-                                    padding: "4px 12px",
-                                    fontWeight: 500,
-                                    cursor: "pointer",
+                                    ...liquidButtonStyle,
+                                    background:
+                                      "linear-gradient(145deg, rgba(239, 68, 68, 0.3), rgba(239, 68, 68, 0.2))",
+                                    padding: "8px 16px",
+                                    fontSize: "14px",
                                   }}
                                 >
-                                  Delete
+                                  🗑️ Delete
                                 </button>
-                              </>
-                            )}
-                          </li>
-                        ))}
-                    </ul>
-                  )}
-                </div>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      ))}
+                  </div>
+                )}
               </div>
             )}
-            {/* Convert Pipe Mapping Section - moved below main conversion UI */}
+
+            {/* Enhanced Convert Pipe Mapping Section */}
             <div
               style={{
-                marginTop: 32,
-                background: "#fff",
-                padding: 24,
-                borderRadius: 12,
-                boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                ...liquidGlassStyle,
+                padding: "40px",
+                marginBottom: "32px",
               }}
             >
               <h3
                 style={{
-                  color: "#6366f1",
-                  marginBottom: 20,
+                  color: "rgba(255,255,255,0.95)",
+                  fontSize: "28px",
+                  fontWeight: "800",
+                  marginBottom: "32px",
                   textAlign: "center",
-                  fontWeight: 700,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "16px",
                 }}
               >
-                Convert Pipe Mapping
+                <span style={{ fontSize: "32px" }}>🔄</span>
+                Data Processing Center
               </h3>
+
               <div
                 style={{
-                  display: "flex",
-                  gap: 32,
-                  marginBottom: 20,
-                  flexWrap: "wrap",
-                  justifyContent: "space-between",
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))",
+                  gap: "28px",
+                  marginBottom: "40px",
                 }}
               >
+                {/* Enhanced Upload Section */}
                 <div
                   style={{
-                    flex: 1,
-                    minWidth: 220,
-                    background: "#f3f4f6",
-                    borderRadius: 10,
-                    padding: 18,
-                    boxShadow: "0 1px 4px rgba(0,0,0,0.03)",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
+                    background:
+                      "linear-gradient(145deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1))",
+                    backdropFilter: "blur(12px)",
+                    borderRadius: "24px",
+                    padding: "32px",
+                    border: "1px solid rgba(99, 102, 241, 0.2)",
+                    textAlign: "center",
+                    transition: "all 0.3s ease",
                   }}
                 >
                   <div
                     style={{
-                      fontWeight: 600,
-                      color: "#6366f1",
-                      marginBottom: 10,
-                      fontSize: 16,
+                      fontSize: "24px",
+                      fontWeight: "700",
+                      color: "rgba(255,255,255,0.95)",
+                      marginBottom: "20px",
                       display: "flex",
                       alignItems: "center",
-                      gap: 6,
+                      justifyContent: "center",
+                      gap: "12px",
                     }}
                   >
-                    <span role="img" aria-label="upload">
-                      📤
-                    </span>{" "}
+                    <span style={{ fontSize: "32px" }}>📤</span>
                     Upload TXT File
                   </div>
-                  <label htmlFor="upload-txt" style={{ width: "100%" }}>
+                  <p
+                    style={{
+                      color: "rgba(255,255,255,0.7)",
+                      fontSize: "14px",
+                      marginBottom: "24px",
+                      lineHeight: "1.5",
+                    }}
+                  >
+                    Upload your pipe-delimited data file for instant processing
+                  </p>
+                  <label
+                    htmlFor="upload-txt"
+                    style={{ display: "block", width: "100%" }}
+                  >
                     <span
                       style={{
+                        ...liquidButtonStyle,
                         display: "block",
-                        background: "#6366f1",
-                        color: "#fff",
-                        borderRadius: 8,
-                        padding: "10px 0",
-                        fontWeight: 600,
-                        fontSize: 16,
-                        cursor: "pointer",
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                        width: "calc(100% - 32px)",
+                        background:
+                          "linear-gradient(145deg, rgba(99, 102, 241, 0.3), rgba(99, 102, 241, 0.2))",
+                        fontSize: "14px",
+                        padding: "12px 16px",
+                        margin: "0 auto",
                         textAlign: "center",
-                        width: "100%",
+                        boxSizing: "border-box",
                       }}
                     >
-                      Choose File
+                      📁 Choose File
                     </span>
                     <input
                       id="upload-txt"
@@ -1114,347 +1395,762 @@ const App: React.FC = () => {
                     />
                   </label>
                 </div>
+
+                {/* Enhanced Paste Section */}
                 <div
                   style={{
-                    flex: 1,
-                    minWidth: 220,
-                    background: "#f3f4f6",
-                    borderRadius: 10,
-                    padding: 18,
-                    boxShadow: "0 1px 4px rgba(0,0,0,0.03)",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
+                    background:
+                      "linear-gradient(145deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1))",
+                    backdropFilter: "blur(12px)",
+                    borderRadius: "24px",
+                    padding: "32px",
+                    border: "1px solid rgba(16, 185, 129, 0.2)",
+                    textAlign: "center",
+                    transition: "all 0.3s ease",
                   }}
                 >
                   <div
                     style={{
-                      fontWeight: 600,
-                      color: "#10b981",
-                      marginBottom: 10,
-                      fontSize: 16,
+                      fontSize: "24px",
+                      fontWeight: "700",
+                      color: "rgba(255,255,255,0.95)",
+                      marginBottom: "20px",
                       display: "flex",
                       alignItems: "center",
-                      gap: 6,
+                      justifyContent: "center",
+                      gap: "12px",
                     }}
                   >
-                    <span role="img" aria-label="paste">
-                      📋
-                    </span>{" "}
-                    Paste Pipe Text
+                    <span style={{ fontSize: "32px" }}>📋</span>
+                    Paste Data
                   </div>
+                  <p
+                    style={{
+                      color: "rgba(255,255,255,0.7)",
+                      fontSize: "14px",
+                      marginBottom: "24px",
+                      lineHeight: "1.5",
+                    }}
+                  >
+                    Paste your pipe-delimited text directly for quick conversion
+                  </p>
                   <textarea
                     value={pastedPipe}
                     onChange={(e) => setPastedPipe(e.target.value)}
-                    placeholder="Paste pipe-formatted text here..."
-                    rows={4}
+                    placeholder="Paste your pipe-formatted data here..."
+                    rows={5}
                     style={{
-                      width: "100%",
-                      padding: 10,
-                      borderRadius: 8,
-                      border: "1px solid #d1d5db",
-                      fontSize: 15,
+                      ...liquidInputStyle,
+                      width: "calc(100% - 32px)",
+                      marginBottom: "20px",
                       resize: "vertical",
-                      marginBottom: 10,
-                      fontFamily: "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                      minHeight: "120px",
+                      boxSizing: "border-box",
                     }}
                   />
                   <button
                     onClick={handlePastePipe}
                     style={{
-                      width: "100%",
-                      background: "#10b981",
-                      color: "#fff",
-                      border: "none",
-                      borderRadius: 6,
-                      padding: "10px 0",
-                      fontWeight: 600,
-                      fontSize: 16,
-                      cursor: "pointer",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                      ...liquidButtonStyle,
+                      width: "calc(100% - 32px)",
+                      background: pastedPipe.trim()
+                        ? "linear-gradient(145deg, rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.2))"
+                        : "linear-gradient(145deg, rgba(107, 114, 128, 0.3), rgba(107, 114, 128, 0.2))",
+                      fontSize: "14px",
+                      padding: "12px 16px",
+                      opacity: pastedPipe.trim() ? 1 : 0.6,
+                      margin: "0 auto",
+                      textAlign: "center",
+                      boxSizing: "border-box",
                     }}
                     disabled={!pastedPipe.trim()}
                   >
-                    Convert Pasted Text
+                    🚀 Process Data
                   </button>
                 </div>
               </div>
+
               {uploadedPipe && (
-                <div style={{ marginTop: 12 }}>
-                  <div style={{ position: "relative", marginBottom: 12 }}>
-                    <strong style={{ color: "#6366f1" }}>Raw Pipe Data:</strong>
-                    {/* Adjust button alignment */}
-                    <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 16 }}>
-                      <button
-                        onClick={handleDownloadTemplateFile}
+                <div style={{ marginTop: "40px" }}>
+                  {/* Enhanced Action Buttons */}
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                      gap: "16px",
+                      marginBottom: "32px",
+                      padding: "0 16px",
+                    }}
+                  >
+                    <button
+                      onClick={handleDownloadTemplateFile}
+                      style={{
+                        ...liquidButtonStyle,
+                        background:
+                          "linear-gradient(145deg, rgba(99, 102, 241, 0.3), rgba(99, 102, 241, 0.2))",
+                        fontSize: "14px",
+                        padding: "12px 16px",
+                        width: "100%",
+                        textAlign: "center",
+                      }}
+                    >
+                      💾 Download File
+                    </button>
+                    <button
+                      onClick={handleUpdateSenderReferenceAndValueDate}
+                      style={{
+                        ...liquidButtonStyle,
+                        background:
+                          "linear-gradient(145deg, rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.2))",
+                        fontSize: "14px",
+                        padding: "12px 16px",
+                        width: "100%",
+                        textAlign: "center",
+                      }}
+                    >
+                      🔄 Auto-fill Sender Ref & Value Date
+                    </button>
+                    <button
+                      onClick={handleCopyToClipboard}
+                      style={{
+                        ...liquidButtonStyle,
+                        background:
+                          "linear-gradient(145deg, rgba(245, 158, 11, 0.3), rgba(245, 158, 11, 0.2))",
+                        fontSize: "14px",
+                        padding: "12px 16px",
+                        width: "100%",
+                        textAlign: "center",
+                      }}
+                    >
+                      📋 Copy to Clipboard
+                    </button>
+                  </div>
+
+                  {/* Enhanced Raw Pipe Data */}
+                  <div
+                    style={{
+                      background: "rgba(0, 0, 0, 0.2)",
+                      backdropFilter: "blur(12px)",
+                      borderRadius: "20px",
+                      padding: "24px",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      marginBottom: "32px",
+                    }}
+                  >
+                    <h4
+                      style={{
+                        color: "rgba(255,255,255,0.95)",
+                        fontSize: "20px",
+                        fontWeight: "700",
+                        marginBottom: "20px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                      }}
+                    >
+                      <span style={{ fontSize: "24px" }}>💾</span>
+                      Raw Pipe Data Preview
+                      <span
                         style={{
-                          background: '#6366f1',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: 6,
-                          padding: '8px 16px',
-                          fontWeight: 600,
-                          cursor: 'pointer',
+                          background: "rgba(16, 185, 129, 0.2)",
+                          color: "rgba(16, 185, 129, 0.9)",
+                          padding: "4px 8px",
+                          borderRadius: "8px",
+                          fontSize: "12px",
+                          fontWeight: "600",
                         }}
                       >
-                        Download File
-                      </button>
-                      <button
-                        onClick={handleUpdateSenderReferenceAndValueDate}
-                        style={{
-                          background: '#10b981',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: 6,
-                          padding: '8px 16px',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Update Sender Reference & Value Date
-                      </button>
-                      <button
-                        onClick={handleCopyToClipboard}
-                        style={{
-                          background: '#f59e42',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: 6,
-                          padding: '8px 16px',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Copy
-                      </button>
-                    </div>
+                        {uploadedRows.length} rows
+                      </span>
+                    </h4>
                     <pre
                       style={{
-                        background: "rgba(255, 255, 255, 0.6)",
-                        backdropFilter: "blur(10px)",
-                        padding: 12,
-                        borderRadius: 8,
-                        fontSize: 15,
-                        color: "#374151",
+                        background: "rgba(0, 0, 0, 0.3)",
+                        color: "rgba(255, 255, 255, 0.9)",
+                        padding: "20px",
+                        borderRadius: "16px",
+                        fontSize: "14px",
+                        fontFamily:
+                          'SF Mono, Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace',
                         whiteSpace: "pre-wrap",
                         wordBreak: "break-all",
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                        border: "1px solid rgba(255, 255, 255, 0.05)",
+                        overflow: "auto",
+                        maxHeight: "350px",
+                        lineHeight: "1.6",
                       }}
                     >
                       {uploadedRows.map((row, rowIndex) => (
-                        <div key={rowIndex}>
-                          {row.split("|").map((value, index, array) => (
-                            <React.Fragment key={index}>
-                              <span
-                                style={{
-                                  cursor: "pointer",
-                                  textDecoration: "underline",
-                                  color: "#6366f1",
-                                }}
-                                title={renderTooltip(index)}
-                                onDoubleClick={() => {
-                                  const configDescription = renderTooltip(index);
-                                  const newValue = prompt(
-                                    `Edit value for pipe at index ${index + 1} (${configDescription}):`,
-                                    value
-                                  );
-                                  if (newValue !== null) {
-                                    const updatedRows = [...uploadedRows];
-                                    const updatedRow = uploadedRows[rowIndex].split("|");
-                                    updatedRow[index] = newValue;
-                                    updatedRows[rowIndex] = updatedRow.join("|");
-                                    setUploadedRows(updatedRows);
+                        <div key={rowIndex} style={{ marginBottom: "8px" }}>
+                          {row
+                            .split("|")
+                            .map(
+                              (
+                                value: string,
+                                index: number,
+                                array: string[]
+                              ) => (
+                                <React.Fragment key={index}>
+                                  <span
+                                    style={{
+                                      cursor: "pointer",
+                                      color: "#60a5fa",
+                                      textDecoration: "underline",
+                                      transition: "all 0.2s ease",
+                                      padding: "2px 4px",
+                                      borderRadius: "4px",
+                                    }}
+                                    title={`${renderTooltip(index)} (Index: ${
+                                      index + 1
+                                    })`}
+                                    onDoubleClick={() => {
+                                      const configDescription =
+                                        renderTooltip(index);
+                                      const newValue = prompt(
+                                        `✏️ Edit value for pipe at index ${
+                                          index + 1
+                                        }\n📝 Field: ${configDescription}\n\nCurrent value:`,
+                                        value
+                                      );
+                                      if (newValue !== null) {
+                                        const updatedRows = [...uploadedRows];
+                                        const updatedRow =
+                                          uploadedRows[rowIndex].split("|");
+                                        updatedRow[index] = newValue;
+                                        updatedRows[rowIndex] =
+                                          updatedRow.join("|");
+                                        setUploadedRows(updatedRows);
 
-                                    const updatedMap = uploadedMap.map((row, i) =>
-                                      i === rowIndex
-                                        ? row.map((item, idx) =>
-                                          idx === index ? { ...item, value: newValue } : item
-                                        )
-                                        : row
-                                    );
-                                    setUploadedMap(updatedMap);
-                                    updateUploadedPipe();
-                                  }
-                                }}
-                              >
-                                {value}
-                              </span>
-                              {index < array.length - 1 && (
-                                <span style={{ color: "#374151" }}>|</span>
-                              )}
-                            </React.Fragment>
-                          ))}
+                                        const updatedMap = uploadedMap.map(
+                                          (row, i) =>
+                                            i === rowIndex
+                                              ? row.map((item, idx) =>
+                                                  idx === index
+                                                    ? {
+                                                        ...item,
+                                                        value: newValue,
+                                                      }
+                                                    : item
+                                                )
+                                              : row
+                                        );
+                                        setUploadedMap(updatedMap);
+                                      }
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      (e.target as HTMLElement).style.color =
+                                        "#93c5fd";
+                                      (
+                                        e.target as HTMLElement
+                                      ).style.background =
+                                        "rgba(147, 197, 253, 0.1)";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      (e.target as HTMLElement).style.color =
+                                        "#60a5fa";
+                                      (
+                                        e.target as HTMLElement
+                                      ).style.background = "transparent";
+                                    }}
+                                  >
+                                    {value}
+                                  </span>
+                                  {index < array.length - 1 && (
+                                    <span
+                                      style={{
+                                        color: "#9ca3af",
+                                      }}
+                                    >
+                                      |
+                                    </span>
+                                  )}
+                                </React.Fragment>
+                              )
+                            )}
                         </div>
                       ))}
                     </pre>
                   </div>
-                  <strong style={{ color: "#6366f1" }}>Mapping:</strong>
-                  {uploadedMap.map((row, i) => (
-                    <div
-                      key={i}
+
+                  {/* Enhanced Mapping Display */}
+                  <div>
+                    <h4
                       style={{
-                        marginBottom: 16,
-                        background: "#eef",
-                        borderRadius: 8,
-                        padding: 12,
+                        color: "rgba(255,255,255,0.95)",
+                        fontSize: "20px",
+                        fontWeight: "700",
+                        marginBottom: "24px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
                       }}
                     >
+                      <span style={{ fontSize: "24px" }}>🗺️</span>
+                      Field Mapping & Editor
+                    </h4>
+                    {uploadedMap.map((row, i) => (
                       <div
+                        key={i}
                         style={{
-                          marginBottom: 6,
-                          color: "#6366f1",
-                          fontWeight: 600,
+                          marginBottom: "24px",
+                          background:
+                            "linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04))",
+                          backdropFilter: "blur(12px)",
+                          borderRadius: "20px",
+                          padding: "28px",
+                          border: "1px solid rgba(255, 255, 255, 0.12)",
+                          transition: "all 0.3s ease",
                         }}
                       >
-                        Row {i + 1}
-                      </div>
-                      {editRowIdx === i ? (
-                        <div style={{ marginBottom: 8 }}>
-                          {row.map((item) => (
-                            <div
-                              key={item.index}
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                marginBottom: 8,
-                              }}
-                            >
-                              <label
-                                style={{
-                                  width: 120,
-                                  color: "#374151",
-                                  fontWeight: 500,
-                                }}
-                              >
-                                Index {item.index + 1}{" "}
-                                <span style={{ color: "#6366f1" }}>
-                                  ({item.description})
-                                </span>
-                                :
-                              </label>
-                              <input
-                                type="text"
-                                value={editRowValues[item.index] || ""}
-                                onChange={(e) =>
-                                  setEditRowValues({
-                                    ...editRowValues,
-                                    [item.index]: e.target.value,
-                                  })
-                                }
-                                style={{
-                                  flex: 1,
-                                  padding: 6,
-                                  borderRadius: 6,
-                                  border: "1px solid #d1d5db",
-                                  fontSize: 15,
-                                }}
-                              />
-                            </div>
-                          ))}
-                          <div
-                            style={{ display: "flex", gap: 8, marginTop: 8 }}
-                          >
-                            <button
-                              onClick={handleSaveUploadedRow}
-                              style={{
-                                background: "#10b981",
-                                color: "#fff",
-                                border: "none",
-                                borderRadius: 6,
-                                padding: "6px 16px",
-                                fontWeight: 600,
-                                cursor: "pointer",
-                              }}
-                            >
-                              Save
-                            </button>
-                            <button
-                              onClick={handleCancelEditUploadedRow}
-                              style={{
-                                background: "#f59e42",
-                                color: "#fff",
-                                border: "none",
-                                borderRadius: 6,
-                                padding: "6px 16px",
-                                fontWeight: 600,
-                                cursor: "pointer",
-                              }}
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <ul
-                          style={{ margin: 0, padding: 0, listStyle: "none" }}
+                        <div
+                          style={{
+                            marginBottom: "20px",
+                            color: "rgba(255,255,255,0.95)",
+                            fontWeight: "700",
+                            fontSize: "18px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: "12px",
+                          }}
                         >
-                          {row.map((item) => (
-                            <li
-                              key={item.index}
-                              style={{ marginBottom: 6, color: "#374151" }}
-                            >
-                              <strong>Index {item.index + 1}:</strong>{" "}
-                              <span style={{ color: "#10b981" }}>
-                                {item.value}
-                              </span>{" "}
-                              <span style={{ color: "#6366f1" }}>
-                                ({item.description})
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                      <div style={{ marginTop: 4 }}>
-                        {editRowIdx === i ? null : (
-                          <button
-                            onClick={() => handleEditUploadedRow(i)}
+                          <div
                             style={{
-                              background: "#6366f1",
-                              color: "#fff",
-                              border: "none",
-                              borderRadius: 6,
-                              padding: "6px 16px",
-                              fontWeight: 600,
-                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "12px",
                             }}
                           >
-                            Edit Row
-                          </button>
+                            <span style={{ fontSize: "20px" }}>📄</span>
+                            <span>Data Row {i + 1}</span>
+                            <span
+                              style={{
+                                background: "rgba(99, 102, 241, 0.2)",
+                                color: "rgba(99, 102, 241, 0.9)",
+                                padding: "4px 8px",
+                                borderRadius: "8px",
+                                fontSize: "12px",
+                                fontWeight: "600",
+                              }}
+                            >
+                              {row.length} fields
+                            </span>
+                          </div>
+                          {editRowIdx !== i && (
+                            <button
+                              onClick={() => handleEditUploadedRow(i)}
+                              style={{
+                                ...liquidButtonStyle,
+                                background:
+                                  "linear-gradient(145deg, rgba(99, 102, 241, 0.3), rgba(99, 102, 241, 0.2))",
+                                padding: "8px 16px",
+                                fontSize: "14px",
+                              }}
+                            >
+                              ✏️ Edit Row
+                            </button>
+                          )}
+                        </div>
+
+                        {editRowIdx === i ? (
+                          <div>
+                            <div
+                              style={{
+                                display: "grid",
+                                gap: "16px",
+                                marginBottom: "24px",
+                              }}
+                            >
+                              {row.map((item: MappedItem) => (
+                                <div
+                                  key={item.index}
+                                  style={{
+                                    display: "grid",
+                                    gridTemplateColumns: "auto 1fr",
+                                    gap: "16px",
+                                    alignItems: "center",
+                                    padding: "16px",
+                                    background: "rgba(0, 0, 0, 0.1)",
+                                    borderRadius: "12px",
+                                  }}
+                                >
+                                  <label
+                                    style={{
+                                      minWidth: "160px",
+                                      color: "rgba(255,255,255,0.9)",
+                                      fontWeight: "600",
+                                      fontSize: "14px",
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      gap: "4px",
+                                    }}
+                                  >
+                                    <span
+                                      style={{
+                                        color: "rgba(99, 165, 250, 0.9)",
+                                      }}
+                                    >
+                                      #{item.index + 1}
+                                    </span>
+                                    <span
+                                      style={{ fontSize: "12px", opacity: 0.8 }}
+                                    >
+                                      {item.description}
+                                    </span>
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={editRowValues[item.index] || ""}
+                                    onChange={(e) =>
+                                      setEditRowValues({
+                                        ...editRowValues,
+                                        [item.index]: e.target.value,
+                                      })
+                                    }
+                                    style={{
+                                      ...liquidInputStyle,
+                                      width: "calc(100% - 16px)",
+                                      boxSizing: "border-box",
+                                    }}
+                                    placeholder={`Enter ${item.description.toLowerCase()}...`}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                            <div
+                              style={{
+                                display: "flex",
+                                gap: "16px",
+                                justifyContent: "center",
+                              }}
+                            >
+                              <button
+                                onClick={handleSaveUploadedRow}
+                                style={{
+                                  ...liquidButtonStyle,
+                                  background:
+                                    "linear-gradient(145deg, rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.2))",
+                                  fontSize: "16px",
+                                  padding: "12px 24px",
+                                }}
+                              >
+                                💾 Save All Changes
+                              </button>
+                              <button
+                                onClick={handleCancelEditUploadedRow}
+                                style={{
+                                  ...liquidButtonStyle,
+                                  background:
+                                    "linear-gradient(145deg, rgba(245, 158, 11, 0.3), rgba(245, 158, 11, 0.2))",
+                                  fontSize: "16px",
+                                  padding: "12px 24px",
+                                }}
+                              >
+                                ❌ Cancel Changes
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns:
+                                "repeat(auto-fit, minmax(300px, 1fr))",
+                              gap: "12px",
+                            }}
+                          >
+                            {row.map((item: MappedItem) => (
+                              <div
+                                key={item.index}
+                                style={{
+                                  color: "rgba(255,255,255,0.85)",
+                                  fontSize: "14px",
+                                  padding: "12px 16px",
+                                  background: "rgba(0, 0, 0, 0.15)",
+                                  borderRadius: "12px",
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: "6px",
+                                  transition: "all 0.2s ease",
+                                  border: "1px solid rgba(255, 255, 255, 0.05)",
+                                }}
+                                onMouseEnter={(e) => {
+                                  (
+                                    e.currentTarget as HTMLElement
+                                  ).style.background = "rgba(0, 0, 0, 0.25)";
+                                  (
+                                    e.currentTarget as HTMLElement
+                                  ).style.transform = "translateY(-2px)";
+                                }}
+                                onMouseLeave={(e) => {
+                                  (
+                                    e.currentTarget as HTMLElement
+                                  ).style.background = "rgba(0, 0, 0, 0.15)";
+                                  (
+                                    e.currentTarget as HTMLElement
+                                  ).style.transform = "translateY(0)";
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                    marginBottom: "4px",
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      fontWeight: "700",
+                                      fontSize: "12px",
+                                      color: "rgba(99, 165, 250, 0.9)",
+                                    }}
+                                  >
+                                    INDEX #{item.index + 1}
+                                  </span>
+                                  <span
+                                    style={{
+                                      fontSize: "10px",
+                                      color: "rgba(255, 255, 255, 0.6)",
+                                      background: "rgba(255, 255, 255, 0.1)",
+                                      padding: "2px 6px",
+                                      borderRadius: "4px",
+                                    }}
+                                  >
+                                    {item.value
+                                      ? `${item.value.length} chars`
+                                      : "Empty"}
+                                  </span>
+                                </div>
+                                <div
+                                  style={{
+                                    color: "rgba(255, 255, 255, 0.7)",
+                                    fontSize: "12px",
+                                    fontWeight: "500",
+                                    marginBottom: "8px",
+                                    lineHeight: "1.3",
+                                  }}
+                                >
+                                  {item.description}
+                                </div>
+                                <div
+                                  style={{
+                                    color: item.value
+                                      ? "rgba(16, 185, 129, 0.9)"
+                                      : "rgba(156, 163, 175, 0.7)",
+                                    fontWeight: "600",
+                                    fontSize: "13px",
+                                    fontFamily: "SF Mono, Monaco, monospace",
+                                    background: "rgba(0, 0, 0, 0.2)",
+                                    padding: "8px 10px",
+                                    borderRadius: "8px",
+                                    wordBreak: "break-all",
+                                    minHeight: "20px",
+                                    display: "flex",
+                                    alignItems: "center",
+                                  }}
+                                >
+                                  {item.value || "(empty field)"}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         )}
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
           </>
         )}
       </div>
+
+      {/* Enhanced Success Modal */}
       {showModal && (
         <div
           style={{
             position: "fixed",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            background: "#fff",
-            padding: "20px",
-            borderRadius: "8px",
-            boxShadow: "0 4px 24px rgba(0,0,0,0.1)",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.5)",
+            backdropFilter: "blur(8px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             zIndex: 1000,
           }}
         >
-          <p style={{ margin: 0, fontWeight: 600, color: "#10b981" }}>
-            Copied! You can paste it now.
-          </p>
+          <div
+            style={{
+              ...liquidGlassStyle,
+              padding: "32px 40px",
+              textAlign: "center",
+              minWidth: "320px",
+              animation: "modalSlideIn 0.3s ease",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "48px",
+                marginBottom: "16px",
+                animation: "bounce 0.6s ease",
+              }}
+            >
+              ✅
+            </div>
+            <h3
+              style={{
+                margin: "0 0 8px 0",
+                fontWeight: "700",
+                color: "rgba(255,255,255,0.95)",
+                fontSize: "20px",
+              }}
+            >
+              Successfully Copied!
+            </h3>
+            <p
+              style={{
+                margin: "0",
+                color: "rgba(255,255,255,0.7)",
+                fontSize: "14px",
+                fontWeight: "500",
+              }}
+            >
+              Data is now in your clipboard and ready to paste
+            </p>
+            <div
+              style={{
+                marginTop: "20px",
+                background: "rgba(16, 185, 129, 0.2)",
+                color: "rgba(16, 185, 129, 0.9)",
+                padding: "8px 16px",
+                borderRadius: "12px",
+                fontSize: "12px",
+                fontWeight: "600",
+              }}
+            >
+              Auto-closing in 2 seconds...
+            </div>
+          </div>
         </div>
       )}
+
       <style>
         {`
-          @keyframes gradientAnimation {
+          body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+          }
+          
+          #root {
+            width: 100%;
+            height: 100%;
+          }
+          
+          @keyframes gradientFlow {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
+          }
+          
+          @keyframes modalSlideIn {
+            from {
+              opacity: 0;
+              transform: scale(0.9) translateY(-20px);
+            }
+            to {
+              opacity: 1;
+              transform: scale(1) translateY(0);
+            }
+          }
+          
+          @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+              transform: translateY(0);
+            }
+            40% {
+              transform: translateY(-10px);
+            }
+            60% {
+              transform: translateY(-5px);
+            }
+          }
+          
+          input::placeholder,
+          textarea::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+            font-style: italic;
+          }
+          
+          input:focus,
+          textarea:focus,
+          select:focus {
+            border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            transform: translateY(-1px);
+          }
+          
+          button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+          }
+          
+          button:active:not(:disabled) {
+            transform: translateY(-1px);
+          }
+          
+          button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+          }
+          
+          select {
+            cursor: pointer;
+          }
+          
+          select option {
+            background: #1a1a1a;
+            color: #fff;
+            padding: 12px;
+            border-radius: 8px;
+          }
+          
+          /* Enhanced Scrollbar styling */
+          ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+          }
+          
+          ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+          }
+          
+          ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.3));
+            border-radius: 6px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+          }
+          
+          ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(139, 92, 246, 0.5));
+          }
+          
+          /* Selection styling */
+          ::selection {
+            background: rgba(99, 102, 241, 0.3);
+            color: rgba(255, 255, 255, 0.95);
+          }
+          
+          /* Smooth transitions for all interactive elements */
+          * {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
           }
         `}
       </style>
