@@ -1,482 +1,43 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import Header from './components/Header';
+import QuickStartGuide from './components/QuickStartGuide';
+import TemplateSelector from './components/TemplateSelector';
+import SuccessModal from './components/SuccessModal';
+import GlobalStyles from './components/GlobalStyles';
+import { useTemplateData } from './hooks/useTemplateData';
+import { downloadFile, generateFileName } from './utils/file';
+import { liquidGlassStyle, liquidButtonStyle, liquidInputStyle } from './styles/theme';
+import { MappedItem } from './types';
 
 document.title = "Template Helper";
 
-// Type definitions for TypeScript support
-interface PipeConfig {
-  index: number;
-  description: string;
-}
-
-interface SavedConfigsType {
-  pipeConfigs: PipeConfig[];
-  pipeFieldValues: { [key: number]: string };
-  [key: string]: any;
-}
-
-interface MappedItem {
-  index: number;
-  value: string;
-  description: string;
-}
-
-interface TemplateConfigsType {
-  [key: string]: PipeConfig[];
-}
-
-// Utility functions with proper typing
-const detectDelimiter = (input: string): string => {
-  const delimiters = [",", ";", "\t", ":"];
-  let maxCount = 0;
-  let selected = ",";
-  delimiters.forEach((delim) => {
-    const count = input.split(delim).length - 1;
-    if (count > maxCount) {
-      maxCount = count;
-      selected = delim;
-    }
-  });
-  return selected;
-};
-
-const convertToPipe = (input: string): string => {
-  const delim = detectDelimiter(input);
-  return input.split(delim).join("|");
-};
-
 const App: React.FC = () => {
   const [showModal, setShowModal] = useState<boolean>(false);
-
-  // Template configurations
-  const ottLabels: string[] = [
-    "Record Type",
-    "Record Seq",
-    "Input File Name",
-    "Customer ID",
-    "Sender Reference",
-    "Value Date",
-    "Currency",
-    "Amount",
-    "Intermediary Institution\n SWIFT CODE",
-    "Intemediary Institution CODE",
-    "Intermediary Institution\nBANK NAME 1",
-    "Intermediary Institution\nBANK NAME 2",
-    "Intermediary Institution\nBANK ADDRESS 2",
-    "Intermediary Institution\nBANK ADDRESS 3",
-    "Beneficiary Bank CODE",
-    "Beneficiary SWIFT CODE",
-    "Beneficiary BANK NAME 1",
-    "Beneficiary BANK ADDRESS 1",
-    "Beneficiary BANK ADDRESS 2",
-    "Beneficiary BANK ADDRESS 3",
-    "Beneficiary BANK Country",
-    "Ordering Customer (1)",
-    "Ordering Address (1)",
-    "Ordering Address (2)",
-    "Ordering Address (3)",
-    "Customer Email",
-    "Ordering Account (1)",
-    "Ordering Account Currency (1)",
-    "Ordering Amount (1)",
-    "Ordering Account (2)",
-    "Ordering Account Currency (2)",
-    "Ordering Amount (2)",
-    "Instruction Code",
-    "Beneficiary Account",
-    "Beneficiary Name 1",
-    "Beneficiary Address 1",
-    "Beneficiary Address 2",
-    "Beneficiary Address 3",
-    "Beneficiary Country",
-    "Remittance Information 1",
-    "Detail of Charges",
-    "Purpose of Payment",
-    "PreAdvice flag",
-    "FixTHB flag",
-    "Forward contract No 1",
-    "Forward currency 1",
-    "Forward Amount 1",
-    "Forword Rate 1",
-    "Forward contract No 2",
-    "Forward currency 2",
-    "Forward Amount 2",
-    "Forword Rate 2",
-    "Forward contract No 3",
-    "Forward currency 3",
-    "Forward Amount 3",
-    "Forword Rate 3",
-    "Forward contract No 4",
-    "Forward currency 4",
-    "Forward Amount 4",
-    "Forword Rate 4",
-    "Forward contract No 5",
-    "Forward currency 5",
-    "Forward Amount 5",
-    "Forword Rate 5",
-    "Forward contract No 6",
-    "Forward currency 6",
-    "Forward Amount 6",
-    "Forword Rate 6",
-    "Forward contract No 7",
-    "Forward currency 7",
-    "Forward Amount 7",
-    "Forword Rate 7",
-    "Forward contract No 8",
-    "Forward currency 8",
-    "Forward Amount 8",
-    "Forword Rate 8",
-    "Forward contract No 9",
-    "Forward currency 9",
-    "Forward Amount 9",
-    "Forword Rate 9",
-    "Forward contract No 10",
-    "Forward currency 10",
-    "Forward Amount 10",
-    "Forword Rate 10",
-    "Forward contract No 11",
-    "Forward currency 11",
-    "Forward Amount 11",
-    "Forword Rate 11",
-    "Forward contract No 12",
-    "Forward currency 12",
-    "Forward Amount 12",
-    "Forword Rate 12",
-    "Forward contract No 13",
-    "Forward currency 13",
-    "Forward Amount 13",
-    "Forword Rate 13",
-    "Forward contract No 14",
-    "Forward currency 14",
-    "Forward Amount 14",
-    "Forword Rate 14",
-    "Forward contract No 15",
-    "Forward currency 15",
-    "Forward Amount 15",
-    "Forword Rate 15",
-    "Forward contract No 16",
-    "Forward currency 16",
-    "Forward Amount 16",
-    "Forword Rate 16",
-    "Forward contract No 17",
-    "Forward currency 17",
-    "Forward Amount 17",
-    "Forword Rate 17",
-    "Forward contract No 18",
-    "Forward currency 18",
-    "Forward Amount 18",
-    "Forword Rate 18",
-    "Forward contract No 19",
-    "Forward currency 19",
-    "Forward Amount 19",
-    "Forword Rate 19",
-    "Forward contract No 20",
-    "Forward currency 20",
-    "Forward Amount 20",
-    "Forword Rate 20",
-    "Forward contract No 21",
-    "Forward currency 21",
-    "Forward Amount 21",
-    "Forword Rate 21",
-    "Forward contract No 22",
-    "Forward currency 22",
-    "Forward Amount 22",
-    "Forword Rate 22",
-    "Forward contract No 23",
-    "Forward currency 23",
-    "Forward Amount 23",
-    "Forword Rate 23",
-    "Forward contract No 24",
-    "Forward currency 24",
-    "Forward Amount 24",
-    "Forword Rate 24",
-    "Forward contract No 25",
-    "Forward currency 25",
-    "Forward Amount 25",
-    "Forword Rate 25",
-    "Forward contract No 26",
-    "Forward currency 26",
-    "Forward Amount 26",
-    "Forword Rate 26",
-    "Forward contract No 27",
-    "Forward currency 27",
-    "Forward Amount 27",
-    "Forword Rate 27",
-    "Forward contract No 28",
-    "Forward currency 28",
-    "Forward Amount 28",
-    "Forword Rate 28",
-    "Forward contract No 29",
-    "Forward currency 29",
-    "Forward Amount 29",
-    "Forword Rate 29",
-    "Forward contract No 30",
-    "Forward currency 30",
-    "Forward Amount 30",
-    "Forword Rate 30",
-    "Reserve 01",
-    "Reserve 02",
-    "Reserve 03",
-    "Reserve 04",
-    "Reserve 05",
-    "EXIM Ref",
-    "Status",
-    "Status desc",
-    "Filler",
-    "EndRecord",
-  ];
-
-  const tfLabels: string[] = [
-    "Product type",
-    "ProductTypeCode",
-    "TransactionTypeCode",
-    "Record Seq",
-    "Input File Name",
-    "ChannelType",
-    "Customer ID",
-    "SenderReference",
-    "Value Date",
-    "TransferCCY",
-    "TransferAmount",
-    "CustomerName",
-    "CustomerAddress1",
-    "CustomerAddress2",
-    "CustomerAddress3",
-    "Customer Email",
-    "Debit Account (1)",
-    "DebitAccountCurrency (1)",
-    "Debit Amount (1)",
-    "Debit Account (2)",
-    "DebitAccountCurrency (2)",
-    "Debit Amount (2)",
-    "Debit Account (3)",
-    "DebitAccountCurrency (3)",
-    "Debit Amount (3)",
-    "Beneficiary Bank CODE",
-    "Beneficiary SWIFT CODE",
-    "Beneficiary BANK NAME 1",
-    "Beneficiary BANK ADDRESS 1",
-    "Beneficiary BANK ADDRESS 2",
-    "Beneficiary BANK ADDRESS 3",
-    "Beneficiary BANK Country",
-    "Beneficiary Account",
-    "Beneficiary Name 1",
-    "Beneficiary Address 1",
-    "Beneficiary Address 2",
-    "Beneficiary Address 3",
-    "Beneficiary Country",
-    "Instruction Code",
-    "Details of Payment",
-    "Charges on",
-    "Purpose of Payment",
-    "Sender to receiver information",
-    "GeneralAppFlag",
-    "LoanCCY",
-    "LoanAmount",
-    "LoanConvertCCY",
-    "LoanConvertAmount",
-    "LoanPeriod",
-    "NoteToBank",
-    "TR Payment type",
-    "Debt CCY",
-    "Forward contract No 1",
-    "Forward currency 1",
-    "Forward Amount 1",
-    "Forword Rate 1",
-    "Forward contract No 2",
-    "Forward currency 2",
-    "Forward Amount 2",
-    "Forword Rate 2",
-    "Forward contract No 3",
-    "Forward currency 3",
-    "Forward Amount 3",
-    "Forword Rate 3",
-    "Forward contract No 4",
-    "Forward currency 4",
-    "Forward Amount 4",
-    "Forword Rate 4",
-    "Forward contract No 5",
-    "Forward currency 5",
-    "Forward Amount 5",
-    "Forword Rate 5",
-    "Forward contract No 6",
-    "Forward currency 6",
-    "Forward Amount 6",
-    "Forword Rate 6",
-    "Forward contract No 7",
-    "Forward currency 7",
-    "Forward Amount 7",
-    "Forword Rate 7",
-    "Forward contract No 8",
-    "Forward currency 8",
-    "Forward Amount 8",
-    "Forword Rate 8",
-    "Forward contract No 9",
-    "Forward currency 9",
-    "Forward Amount 9",
-    "Forword Rate 9",
-    "Forward contract No 10",
-    "Forward currency 10",
-    "Forward Amount 10",
-    "Forword Rate 10",
-    "Forward contract No 11",
-    "Forward currency 11",
-    "Forward Amount 11",
-    "Forword Rate 11",
-    "Forward contract No 12",
-    "Forward currency 12",
-    "Forward Amount 12",
-    "Forword Rate 12",
-    "Forward contract No 13",
-    "Forward currency 13",
-    "Forward Amount 13",
-    "Forword Rate 13",
-    "Forward contract No 14",
-    "Forward currency 14",
-    "Forward Amount 14",
-    "Forword Rate 14",
-    "Forward contract No 15",
-    "Forward currency 15",
-    "Forward Amount 15",
-    "Forword Rate 15",
-    "Forward contract No 16",
-    "Forward currency 16",
-    "Forward Amount 16",
-    "Forword Rate 16",
-    "Forward contract No 17",
-    "Forward currency 17",
-    "Forward Amount 17",
-    "Forword Rate 17",
-    "Forward contract No 18",
-    "Forward currency 18",
-    "Forward Amount 18",
-    "Forword Rate 18",
-    "Forward contract No 19",
-    "Forward currency 19",
-    "Forward Amount 19",
-    "Forword Rate 19",
-    "Forward contract No 20",
-    "Forward currency 20",
-    "Forward Amount 20",
-    "Forword Rate 20",
-    "Forward contract No 21",
-    "Forward currency 21",
-    "Forward Amount 21",
-    "Forword Rate 21",
-    "Forward contract No 22",
-    "Forward currency 22",
-    "Forward Amount 22",
-    "Forword Rate 22",
-    "Forward contract No 23",
-    "Forward currency 23",
-    "Forward Amount 23",
-    "Forword Rate 23",
-    "Forward contract No 24",
-    "Forward currency 24",
-    "Forward Amount 24",
-    "Forword Rate 24",
-    "Forward contract No 25",
-    "Forward currency 25",
-    "Forward Amount 25",
-    "Forword Rate 25",
-    "Forward contract No 26",
-    "Forward currency 26",
-    "Forward Amount 26",
-    "Forword Rate 26",
-    "Forward contract No 27",
-    "Forward currency 27",
-    "Forward Amount 27",
-    "Forword Rate 27",
-    "Forward contract No 28",
-    "Forward currency 28",
-    "Forward Amount 28",
-    "Forword Rate 28",
-    "Forward contract No 29",
-    "Forward currency 29",
-    "Forward Amount 29",
-    "Forword Rate 29",
-    "Forward contract No 30",
-    "Forward currency 30",
-    "Forward Amount 30",
-    "Forword Rate 30",
-    "FixTHB flag",
-    "Reserve 01",
-    "Reserve 02",
-    "Reserve 03",
-    "Reserve 04",
-    "Reserve 05",
-    "Reserve 06",
-    "Reserve 07",
-    "Reserve 08",
-    "Reserve 09",
-    "Reserve 10",
-    "Reserve 11",
-    "Reserve 12",
-    "EXIM Ref",
-    "Status",
-    "Status desc",
-    "Filler",
-    "EndRecord",
-  ];
-
-  const templateConfigs: TemplateConfigsType = {
-    "OTT Template": ottLabels.map((desc, i) => ({
-      index: i,
-      description: desc,
-    })),
-    "TF Template": tfLabels.map((desc, i) => ({ index: i, description: desc })),
-  };
-
-  // State management with proper typing
-  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+  const [showConfig, setShowConfig] = useState<boolean>(false);
+  const [pastedPipe, setPastedPipe] = useState<string>("");
   const [editRowIdx, setEditRowIdx] = useState<number | null>(null);
-  const [editRowValues, setEditRowValues] = useState<{ [key: number]: string }>(
-    {}
-  );
-
-  // localStorage storage for persistence
-  const [savedConfigs, setSavedConfigs] = useState<SavedConfigsType>(() => {
-    try {
-      const saved = localStorage.getItem('templateHelperConfigs');
-      return saved ? JSON.parse(saved) : {
-        pipeConfigs: [],
-        pipeFieldValues: {},
-      };
-    } catch {
-      return {
-        pipeConfigs: [],
-        pipeFieldValues: {},
-      };
-    }
-  });
-
-  const [pipeData, setPipeData] = useState<string>("");
-  const [configs, setConfigs] = useState<PipeConfig[]>([]);
+  const [editRowValues, setEditRowValues] = useState<{ [key: number]: string }>({});
   const [configIndex, setConfigIndex] = useState<string>("");
   const [configDesc, setConfigDesc] = useState<string>("");
   const [editIdx, setEditIdx] = useState<number | null>(null);
   const [editDesc, setEditDesc] = useState<string>("");
-  const [showConfig, setShowConfig] = useState<boolean>(false);
-  const [fieldValues, setFieldValues] = useState<{ [key: number]: string }>({});
-  const [uploadedPipe, setUploadedPipe] = useState<string>("");
-  const [uploadedRows, setUploadedRows] = useState<string[]>([]);
-  const [uploadedMap, setUploadedMap] = useState<MappedItem[][]>([]);
-  const [pastedPipe, setPastedPipe] = useState<string>("");
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
-  // Handler functions with proper typing
-  const handleSelectTemplate = (template: string): void => {
-    setSelectedTemplate(template);
-    const saved = savedConfigs["pipeConfigs_" + template] as
-      | PipeConfig[]
-      | undefined;
-    if (saved && saved.length > 0) {
-      setConfigs(saved);
-      setSavedConfigs((prev) => ({ ...prev, pipeConfigs: saved }));
-    } else {
-      const defaultConfigs = templateConfigs[template] || [];
-      setConfigs(defaultConfigs);
-      setSavedConfigs((prev) => ({ ...prev, pipeConfigs: defaultConfigs }));
-    }
-  };
+  const {
+    selectedTemplate,
+    configs,
+    uploadedPipe,
+    uploadedRows,
+    uploadedMap,
+    handleSelectTemplate,
+    handleResetTemplate,
+    processPipeMapping,
+    handleUpdateSenderReferenceAndValueDate,
+    addConfig,
+    updateConfig,
+    deleteConfig,
+    setUploadedMap,
+  } = useTemplateData();
 
   const handleEditUploadedRow = (rowIdx: number): void => {
     const row = uploadedMap[rowIdx];
@@ -498,7 +59,6 @@ const App: React.FC = () => {
       }));
     });
     setUploadedMap(newUploadedMap);
-    updateUploadedPipe();
     setEditRowIdx(null);
     setEditRowValues({});
   };
@@ -511,84 +71,46 @@ const App: React.FC = () => {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    setIsProcessing(true);
     const reader = new FileReader();
     reader.onload = (ev) => {
       const text = (ev.target?.result as string) || "";
-      processPipeMapping(text);
+      setTimeout(() => {
+        processPipeMapping(text);
+        setIsProcessing(false);
+        // Reset input value เพื่อให้สามารถอัพโหลดไฟล์เดิมได้อีก
+        e.target.value = "";
+      }, 100); // เพิ่ม delay เล็กน้อยเพื่อให้เห็น loading
     };
     reader.readAsText(file);
   };
 
   const handlePastePipe = (): void => {
     if (pastedPipe.trim()) {
-      processPipeMapping(pastedPipe);
+      setIsProcessing(true);
+      setTimeout(() => {
+        processPipeMapping(pastedPipe);
+        // เคลียร์ textarea หลังจากประมวลผลเสร็จ
+        setPastedPipe("");
+        setIsProcessing(false);
+      }, 100);
     }
-  };
-
-  const processPipeMapping = (text: string): void => {
-    setUploadedPipe(text);
-    const rows = text.split(/\r?\n/).filter((r: string) => r.trim() !== "");
-    setUploadedRows(rows);
-    const mappedRows = rows.map((row: string) => {
-      const values = row.split("|");
-      return configs
-        .sort((a, b) => a.index - b.index)
-        .map((cfg) => ({
-          index: cfg.index,
-          value: values[cfg.index] || "",
-          description: cfg.description,
-        }));
-    });
-    setUploadedMap(mappedRows);
   };
 
   const handleDownloadTemplateFile = (): void => {
     if (!uploadedPipe || !selectedTemplate) return;
-
-    const now = new Date();
-    const pad = (n: number, len = 2): string => n.toString().padStart(len, "0");
-    const timestamp =
-      pad(now.getFullYear() % 100) +
-      pad(now.getMonth() + 1) +
-      pad(now.getDate()) +
-      "_" +
-      pad(now.getHours()) +
-      pad(now.getMinutes()) +
-      pad(now.getSeconds());
-
-    const templatePrefixMap: { [key: string]: string } = {
-      "OTT Template": "OTT",
-      "TF Template": "TF",
-    };
-    const prefix =
-      templatePrefixMap[selectedTemplate] ||
-      selectedTemplate.replace(/\s*Template$/, "");
-
-    const fileName = `${prefix}_${timestamp}.txt`;
-    const blob = new Blob([uploadedPipe], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = fileName;
-    a.click();
-    URL.revokeObjectURL(url);
+    const fileName = generateFileName(selectedTemplate);
+    downloadFile(uploadedPipe, fileName);
   };
 
   const handleAddConfig = (): void => {
     const idx = parseInt(configIndex, 10) - 1;
     if (!isNaN(idx) && configDesc.trim()) {
-      if (configs.some((cfg) => cfg.index === idx)) return;
-      const newConfigs = [...configs, { index: idx, description: configDesc }];
-      setConfigs(newConfigs);
-      setSavedConfigs((prev) => ({ ...prev, pipeConfigs: newConfigs }));
-      if (selectedTemplate) {
-        setSavedConfigs((prev) => ({
-          ...prev,
-          ["pipeConfigs_" + selectedTemplate]: newConfigs,
-        }));
+      if (addConfig(idx, configDesc)) {
+        setConfigIndex("");
+        setConfigDesc("");
       }
-      setConfigIndex("");
-      setConfigDesc("");
     }
   };
 
@@ -601,19 +123,7 @@ const App: React.FC = () => {
   const handleSaveEdit = (): void => {
     if (editIdx !== null && editDesc.trim()) {
       const idx = parseInt(configIndex, 10) - 1;
-      const newConfigs = configs.map((cfg) =>
-        cfg.index === editIdx
-          ? { ...cfg, index: idx, description: editDesc }
-          : cfg
-      );
-      setConfigs(newConfigs);
-      setSavedConfigs((prev) => ({ ...prev, pipeConfigs: newConfigs }));
-      if (selectedTemplate) {
-        setSavedConfigs((prev) => ({
-          ...prev,
-          ["pipeConfigs_" + selectedTemplate]: newConfigs,
-        }));
-      }
+      updateConfig(editIdx, idx, editDesc);
       setEditIdx(null);
       setEditDesc("");
       setConfigIndex("");
@@ -621,70 +131,7 @@ const App: React.FC = () => {
   };
 
   const handleDeleteConfig = (idx: number): void => {
-    const newConfigs = configs.filter((cfg) => cfg.index !== idx);
-    setConfigs(newConfigs);
-    setSavedConfigs((prev) => ({ ...prev, pipeConfigs: newConfigs }));
-    if (selectedTemplate) {
-      setSavedConfigs((prev) => ({
-        ...prev,
-        ["pipeConfigs_" + selectedTemplate]: newConfigs,
-      }));
-    }
-    setFieldValues((prev) => {
-      const copy = { ...prev };
-      delete copy[idx];
-      return copy;
-    });
-  };
-
-  const handleUpdateSenderReferenceAndValueDate = (): void => {
-    const senderRefIdx = configs.find(
-      (cfg) =>
-        cfg.description.replace(/\s/g, "").toLowerCase() ===
-          "senderreference" ||
-        cfg.description.replace(/\s/g, "").toLowerCase() === "sender reference"
-    )?.index;
-    const valueDateIdx = configs.find(
-      (cfg) => cfg.description.replace(/\s/g, "").toLowerCase() === "valuedate"
-    )?.index;
-
-    if (senderRefIdx === undefined && valueDateIdx === undefined) return;
-
-    const now = new Date();
-    const pad = (n: number, len = 2): string => n.toString().padStart(len, "0");
-    const senderRefBaseValue =
-      pad(now.getFullYear() % 100) +
-      pad(now.getMonth() + 1) +
-      pad(now.getDate()) +
-      pad(now.getHours()) +
-      pad(now.getMinutes()) +
-      pad(now.getSeconds());
-    const valueDateValue =
-      now.getFullYear().toString() +
-      pad(now.getMonth() + 1) +
-      pad(now.getDate());
-
-    const newUploadedMap = uploadedMap.map((row, rowIndex) =>
-      row.map((item) => {
-        if (item.index === senderRefIdx) {
-          return { ...item, value: `${senderRefBaseValue}_${rowIndex + 1}` };
-        }
-        if (item.index === valueDateIdx) {
-          return { ...item, value: valueDateValue };
-        }
-        return item;
-      })
-    );
-    setUploadedMap(newUploadedMap);
-
-    const newRows = newUploadedMap.map((row) =>
-      row
-        .sort((a, b) => a.index - b.index)
-        .map((item) => item.value)
-        .join("|")
-    );
-    setUploadedRows(newRows);
-    setUploadedPipe(newRows.join("\n"));
+    deleteConfig(idx);
   };
 
   const handleCopyToClipboard = (): void => {
@@ -696,7 +143,6 @@ const App: React.FC = () => {
       .writeText(uploadedPipe)
       .then(() => {
         setShowModal(true);
-        setTimeout(() => setShowModal(false), 2000);
       })
       .catch((err) => {
         console.error("Failed to copy content to clipboard:", err);
@@ -706,101 +152,6 @@ const App: React.FC = () => {
   const renderTooltip = (index: number): string => {
     const config = configs.find((cfg) => cfg.index === index);
     return config ? config.description : "Unknown";
-  };
-
-  const updateUploadedPipe = (): void => {
-    const newRows = uploadedMap.map((row) =>
-      row
-        .sort((a, b) => a.index - b.index)
-        .map((item) => item.value)
-        .join("|")
-    );
-    setUploadedRows(newRows);
-    setUploadedPipe(newRows.join("\n"));
-  };
-
-  // Effects with proper dependency arrays
-  useEffect(() => {
-    setSavedConfigs((prev) => ({ ...prev, pipeFieldValues: fieldValues }));
-  }, [fieldValues]);
-
-  useEffect(() => {
-    setSavedConfigs((prev) => ({ ...prev, pipeConfigs: configs }));
-  }, [configs]);
-
-  useEffect(() => {
-    updateUploadedPipe();
-  }, [uploadedMap]);
-
-  // Update uploaded map descriptions when configs change
-  useEffect(() => {
-    if (uploadedRows.length > 0 && configs.length > 0) {
-      const updatedMap = uploadedRows.map((row: string) => {
-        const values = row.split("|");
-        return configs
-          .sort((a, b) => a.index - b.index)
-          .map((cfg) => ({
-            index: cfg.index,
-            value: values[cfg.index] || "",
-            description: cfg.description,
-          }));
-      });
-      setUploadedMap(updatedMap);
-    }
-  }, [configs, uploadedRows]);
-
-  // Save to localStorage whenever savedConfigs changes
-  useEffect(() => {
-    try {
-      localStorage.setItem('templateHelperConfigs', JSON.stringify(savedConfigs));
-    } catch (error) {
-      console.error('Failed to save configs to localStorage:', error);
-    }
-  }, [savedConfigs]);
-
-  // Apple Liquid Glass design system styles
-  const liquidGlassStyle: React.CSSProperties = {
-    background: "rgba(255, 255, 255, 0.08)",
-    backdropFilter: "blur(20px) saturate(180%)",
-    WebkitBackdropFilter: "blur(20px) saturate(180%)",
-    border: "1px solid rgba(255, 255, 255, 0.125)",
-    borderRadius: "24px",
-    boxShadow:
-      "0 8px 32px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
-  };
-
-  const liquidButtonStyle: React.CSSProperties = {
-    background:
-      "linear-gradient(145deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05))",
-    backdropFilter: "blur(16px) saturate(180%)",
-    WebkitBackdropFilter: "blur(16px) saturate(180%)",
-    border: "1px solid rgba(255, 255, 255, 0.18)",
-    borderRadius: "16px",
-    color: "rgba(255, 255, 255, 0.95)",
-    fontWeight: "600",
-    fontSize: "15px",
-    padding: "12px 24px",
-    cursor: "pointer",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-    boxShadow:
-      "0 4px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
-    fontFamily:
-      '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif',
-  };
-
-  const liquidInputStyle: React.CSSProperties = {
-    background: "rgba(255, 255, 255, 0.1)",
-    backdropFilter: "blur(16px) saturate(180%)",
-    WebkitBackdropFilter: "blur(16px) saturate(180%)",
-    border: "1px solid rgba(255, 255, 255, 0.15)",
-    borderRadius: "12px",
-    color: "rgba(255, 255, 255, 0.95)",
-    fontSize: "16px",
-    padding: "12px 16px",
-    outline: "none",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-    fontFamily:
-      '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif',
   };
 
   return (
@@ -829,216 +180,19 @@ const App: React.FC = () => {
         padding: "20px",
         paddingBottom: "40px" 
       }}>
-        {/* Enhanced Main Title with Version Badge */}
-        <div
-          style={{
-            textAlign: "center",
-            marginBottom: "40px",
-            padding: "40px",
-            ...liquidGlassStyle,
-            position: "relative",
-          }}
-        >
-          <h1
-            style={{
-              fontSize: "48px",
-              fontWeight: "800",
-              margin: "0",
-              background:
-                "linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.7) 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              letterSpacing: "-2px",
-              textShadow: "0 4px 16px rgba(0,0,0,0.1)",
-            }}
-          >
-            Template Helper
-          </h1>
-        </div>
-
-        {/* Enhanced Help Section */}
-        <div
-          style={{
-            ...liquidGlassStyle,
-            padding: "32px",
-            marginBottom: "32px",
-          }}
-        >
-          <h3
-            style={{
-              color: "rgba(255,255,255,0.95)",
-              fontSize: "22px",
-              fontWeight: "700",
-              marginBottom: "20px",
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-            }}
-          >
-            <span style={{ fontSize: "28px" }}>💡</span>
-            Quick Start Guide
-          </h3>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-              gap: "16px",
-              color: "rgba(255,255,255,0.85)",
-              fontSize: "16px",
-              lineHeight: "1.6",
-            }}
-          >
-            <div
-              style={{
-                padding: "20px",
-                background: "rgba(255, 255, 255, 0.05)",
-                borderRadius: "16px",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-              }}
-            >
-              <div style={{ fontSize: "24px", marginBottom: "12px" }}>🎯</div>
-              <strong style={{ color: "rgba(255,255,255,0.95)" }}>
-                Interactive Data
-              </strong>
-              <br />
-              Hover over pipe data to see field descriptions
-            </div>
-            <div
-              style={{
-                padding: "20px",
-                background: "rgba(255, 255, 255, 0.05)",
-                borderRadius: "16px",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-              }}
-            >
-              <div style={{ fontSize: "24px", marginBottom: "12px" }}>✨</div>
-              <strong style={{ color: "rgba(255,255,255,0.95)" }}>
-                Quick Edit
-              </strong>
-              <br />
-              Double-click on any pipe value to edit instantly
-            </div>
-            <div
-              style={{
-                padding: "20px",
-                background: "rgba(255, 255, 255, 0.05)",
-                borderRadius: "16px",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-              }}
-            >
-              <div style={{ fontSize: "24px", marginBottom: "12px" }}>📋</div>
-              <strong style={{ color: "rgba(255,255,255,0.95)" }}>
-                Import Data
-              </strong>
-              <br />
-              Upload .txt files or paste pipe-formatted text
-            </div>
-          </div>
-        </div>
-
-        {/* Enhanced Template Selection */}
-        <div
-          style={{
-            ...liquidGlassStyle,
-            padding: "32px",
-            marginBottom: "32px",
-          }}
-        >
-          <h3
-            style={{
-              color: "rgba(255,255,255,0.95)",
-              fontSize: "22px",
-              fontWeight: "700",
-              marginBottom: "24px",
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-            }}
-          >
-            <span style={{ fontSize: "28px" }}>⚙️</span>
-            Template Configuration
-          </h3>
-          <select
-            value={selectedTemplate}
-            onChange={(e) => handleSelectTemplate(e.target.value)}
-            style={{
-              ...liquidInputStyle,
-              width: "100%",
-              marginBottom: "20px",
-              fontSize: "18px",
-              padding: "16px 20px",
-            }}
-          >
-            <option value="" style={{ background: "#1a1a1a", color: "#fff" }}>
-              🎯 Select Your Template
-            </option>
-            {Object.keys(templateConfigs).map((tpl) => (
-              <option
-                key={tpl}
-                value={tpl}
-                style={{ background: "#1a1a1a", color: "#fff" }}
-              >
-                {tpl}
-              </option>
-            ))}
-          </select>
-          {selectedTemplate && (
-            <div style={{ 
-              display: "flex", 
-              gap: "16px", 
-              flexWrap: "wrap", 
-              justifyContent: "center",
-              marginTop: "24px" 
-            }}>
-              <button
-                onClick={() => {
-                  setSavedConfigs((prev) => {
-                    const newConfigs = { ...prev };
-                    delete newConfigs["pipeConfigs_" + selectedTemplate];
-                    return newConfigs;
-                  });
-                  const defaultConfigs =
-                    templateConfigs[selectedTemplate] || [];
-                  setConfigs(defaultConfigs);
-                  setSavedConfigs((prev) => ({
-                    ...prev,
-                    pipeConfigs: defaultConfigs,
-                  }));
-                }}
-                style={{
-                  ...liquidButtonStyle,
-                  background:
-                    "linear-gradient(145deg, rgba(239, 68, 68, 0.3), rgba(239, 68, 68, 0.2))",
-                  fontSize: "14px",
-                  padding: "12px 20px",
-                  minWidth: "160px",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                🔄 Reset to Default
-              </button>
-              <button
-                onClick={() => setShowConfig((prev) => !prev)}
-                style={{
-                  ...liquidButtonStyle,
-                  background: showConfig
-                    ? "linear-gradient(145deg, rgba(239, 68, 68, 0.3), rgba(239, 68, 68, 0.2))"
-                    : "linear-gradient(145deg, rgba(99, 102, 241, 0.3), rgba(99, 102, 241, 0.2))",
-                  fontSize: "14px",
-                  padding: "12px 20px",
-                  minWidth: "140px",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {showConfig ? "👁️ Hide Config" : "🔧 Edit Config"}
-              </button>
-            </div>
-          )}
-        </div>
+        <Header />
+        <QuickStartGuide />
+        <TemplateSelector
+          selectedTemplate={selectedTemplate}
+          onSelectTemplate={handleSelectTemplate}
+          onResetTemplate={handleResetTemplate}
+          onToggleConfig={() => setShowConfig(prev => !prev)}
+          showConfig={showConfig}
+        />
 
         {selectedTemplate && (
           <>
-            {/* Enhanced Pipe Index Config */}
+            {/* Configuration Section */}
             {showConfig && (
               <div
                 style={{
@@ -1295,7 +449,7 @@ const App: React.FC = () => {
               </div>
             )}
 
-            {/* Enhanced Convert Pipe Mapping Section */}
+            {/* Data Processing Section */}
             <div
               style={{
                 ...liquidGlassStyle,
@@ -1328,7 +482,7 @@ const App: React.FC = () => {
                   marginBottom: "40px",
                 }}
               >
-                {/* Enhanced Upload Section */}
+                {/* Upload Section */}
                 <div
                   style={{
                     background:
@@ -1375,16 +529,19 @@ const App: React.FC = () => {
                         ...liquidButtonStyle,
                         display: "block",
                         width: "calc(100% - 32px)",
-                        background:
-                          "linear-gradient(145deg, rgba(99, 102, 241, 0.3), rgba(99, 102, 241, 0.2))",
+                        background: isProcessing
+                          ? "linear-gradient(145deg, rgba(107, 114, 128, 0.3), rgba(107, 114, 128, 0.2))"
+                          : "linear-gradient(145deg, rgba(99, 102, 241, 0.3), rgba(99, 102, 241, 0.2))",
                         fontSize: "14px",
                         padding: "12px 16px",
                         margin: "0 auto",
                         textAlign: "center",
                         boxSizing: "border-box",
+                        opacity: isProcessing ? 0.7 : 1,
+                        pointerEvents: isProcessing ? "none" : "auto",
                       }}
                     >
-                      📁 Choose File
+                      {isProcessing ? "⏳ Processing..." : "📁 Choose File"}
                     </span>
                     <input
                       id="upload-txt"
@@ -1396,7 +553,7 @@ const App: React.FC = () => {
                   </label>
                 </div>
 
-                {/* Enhanced Paste Section */}
+                {/* Paste Section */}
                 <div
                   style={{
                     background:
@@ -1453,26 +610,28 @@ const App: React.FC = () => {
                     style={{
                       ...liquidButtonStyle,
                       width: "calc(100% - 32px)",
-                      background: pastedPipe.trim()
+                      background: isProcessing
+                        ? "linear-gradient(145deg, rgba(107, 114, 128, 0.3), rgba(107, 114, 128, 0.2))"
+                        : pastedPipe.trim()
                         ? "linear-gradient(145deg, rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.2))"
                         : "linear-gradient(145deg, rgba(107, 114, 128, 0.3), rgba(107, 114, 128, 0.2))",
                       fontSize: "14px",
                       padding: "12px 16px",
-                      opacity: pastedPipe.trim() ? 1 : 0.6,
+                      opacity: (pastedPipe.trim() && !isProcessing) ? 1 : 0.6,
                       margin: "0 auto",
                       textAlign: "center",
                       boxSizing: "border-box",
                     }}
-                    disabled={!pastedPipe.trim()}
+                    disabled={!pastedPipe.trim() || isProcessing}
                   >
-                    🚀 Process Data
+                    {isProcessing ? "⏳ Processing..." : "🚀 Process Data"}
                   </button>
                 </div>
               </div>
 
               {uploadedPipe && (
                 <div style={{ marginTop: "40px" }}>
-                  {/* Enhanced Action Buttons */}
+                  {/* Action Buttons */}
                   <div
                     style={{
                       display: "grid",
@@ -1526,7 +685,7 @@ const App: React.FC = () => {
                     </button>
                   </div>
 
-                  {/* Enhanced Raw Pipe Data */}
+                  {/* Raw Pipe Data */}
                   <div
                     style={{
                       background: "rgba(0, 0, 0, 0.2)",
@@ -1619,7 +778,6 @@ const App: React.FC = () => {
                                         updatedRow[index] = newValue;
                                         updatedRows[rowIndex] =
                                           updatedRow.join("|");
-                                        setUploadedRows(updatedRows);
 
                                         const updatedMap = uploadedMap.map(
                                           (row, i) =>
@@ -1672,7 +830,7 @@ const App: React.FC = () => {
                     </pre>
                   </div>
 
-                  {/* Enhanced Mapping Display */}
+                  {/* Mapping Display */}
                   <div>
                     <h4
                       style={{
@@ -1966,194 +1124,12 @@ const App: React.FC = () => {
         )}
       </div>
 
-      {/* Enhanced Success Modal */}
-      {showModal && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "rgba(0, 0, 0, 0.5)",
-            backdropFilter: "blur(8px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-          }}
-        >
-          <div
-            style={{
-              ...liquidGlassStyle,
-              padding: "32px 40px",
-              textAlign: "center",
-              minWidth: "320px",
-              animation: "modalSlideIn 0.3s ease",
-            }}
-          >
-            <div
-              style={{
-                fontSize: "48px",
-                marginBottom: "16px",
-                animation: "bounce 0.6s ease",
-              }}
-            >
-              ✅
-            </div>
-            <h3
-              style={{
-                margin: "0 0 8px 0",
-                fontWeight: "700",
-                color: "rgba(255,255,255,0.95)",
-                fontSize: "20px",
-              }}
-            >
-              Successfully Copied!
-            </h3>
-            <p
-              style={{
-                margin: "0",
-                color: "rgba(255,255,255,0.7)",
-                fontSize: "14px",
-                fontWeight: "500",
-              }}
-            >
-              Data is now in your clipboard and ready to paste
-            </p>
-            <div
-              style={{
-                marginTop: "20px",
-                background: "rgba(16, 185, 129, 0.2)",
-                color: "rgba(16, 185, 129, 0.9)",
-                padding: "8px 16px",
-                borderRadius: "12px",
-                fontSize: "12px",
-                fontWeight: "600",
-              }}
-            >
-              Auto-closing in 2 seconds...
-            </div>
-          </div>
-        </div>
-      )}
-
-      <style>
-        {`
-          body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow-x: hidden;
-          }
-          
-          #root {
-            width: 100%;
-            height: 100%;
-          }
-          
-          @keyframes gradientFlow {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-          }
-          
-          @keyframes modalSlideIn {
-            from {
-              opacity: 0;
-              transform: scale(0.9) translateY(-20px);
-            }
-            to {
-              opacity: 1;
-              transform: scale(1) translateY(0);
-            }
-          }
-          
-          @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% {
-              transform: translateY(0);
-            }
-            40% {
-              transform: translateY(-10px);
-            }
-            60% {
-              transform: translateY(-5px);
-            }
-          }
-          
-          input::placeholder,
-          textarea::placeholder {
-            color: rgba(255, 255, 255, 0.5);
-            font-style: italic;
-          }
-          
-          input:focus,
-          textarea:focus,
-          select:focus {
-            border-color: rgba(99, 102, 241, 0.4);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-            transform: translateY(-1px);
-          }
-          
-          button:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3);
-          }
-          
-          button:active:not(:disabled) {
-            transform: translateY(-1px);
-          }
-          
-          button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-          }
-          
-          select {
-            cursor: pointer;
-          }
-          
-          select option {
-            background: #1a1a1a;
-            color: #fff;
-            padding: 12px;
-            border-radius: 8px;
-          }
-          
-          /* Enhanced Scrollbar styling */
-          ::-webkit-scrollbar {
-            width: 12px;
-            height: 12px;
-          }
-          
-          ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 6px;
-          }
-          
-          ::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.3));
-            border-radius: 6px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-          }
-          
-          ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(139, 92, 246, 0.5));
-          }
-          
-          /* Selection styling */
-          ::selection {
-            background: rgba(99, 102, 241, 0.3);
-            color: rgba(255, 255, 255, 0.95);
-          }
-          
-          /* Smooth transitions for all interactive elements */
-          * {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-          }
-        `}
-      </style>
+      <SuccessModal 
+        show={showModal} 
+        onClose={() => setShowModal(false)}
+        autoCloseSeconds={2}
+      />
+      <GlobalStyles />
     </div>
   );
 };
