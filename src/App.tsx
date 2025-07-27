@@ -1,25 +1,31 @@
 import React, { useState } from "react";
-import Header from './components/Header';
-import QuickStartGuide from './components/QuickStartGuide';
-import TemplateSelector from './components/TemplateSelector';
-import SuccessModal from './components/SuccessModal';
-import SaveDataModal from './components/SaveDataModal';
-import SavedDataModal from './components/SavedDataModal';
-import GlobalStyles from './components/GlobalStyles';
-import { useTemplateData } from './hooks/useTemplateData';
-import { downloadFile, generateFileName } from './utils/file';
-import { liquidGlassStyle, liquidButtonStyle, liquidInputStyle } from './styles/theme';
-import { MappedItem } from './types';
+import Header from "./components/Header";
+import QuickStartGuide from "./components/QuickStartGuide";
+import TemplateSelector from "./components/TemplateSelector";
+import SuccessModal from "./components/SuccessModal";
+import SaveDataModal from "./components/SaveDataModal";
+import SavedDataModal from "./components/SavedDataModal";
+import GlobalStyles from "./components/GlobalStyles";
+import { useTemplateData } from "./hooks/useTemplateData";
+import { downloadFile, generateFileName } from "./utils/file";
+import {
+  liquidGlassStyle,
+  liquidButtonStyle,
+  liquidInputStyle,
+} from "./styles/theme";
+import { MappedItem } from "./types";
 
 document.title = "Template Helper";
 
 const App: React.FC = () => {
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [modalType, setModalType] = useState<'copy' | 'save'>('copy');
+  const [modalType, setModalType] = useState<"copy" | "save">("copy");
   const [showConfig, setShowConfig] = useState<boolean>(false);
   const [pastedPipe, setPastedPipe] = useState<string>("");
   const [editRowIdx, setEditRowIdx] = useState<number | null>(null);
-  const [editRowValues, setEditRowValues] = useState<{ [key: number]: string }>({});
+  const [editRowValues, setEditRowValues] = useState<{ [key: number]: string }>(
+    {}
+  );
   const [configIndex, setConfigIndex] = useState<string>("");
   const [configDesc, setConfigDesc] = useState<string>("");
   const [editIdx, setEditIdx] = useState<number | null>(null);
@@ -78,7 +84,7 @@ const App: React.FC = () => {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
+
     setIsProcessing(true);
     const reader = new FileReader();
     reader.onload = (ev) => {
@@ -149,7 +155,7 @@ const App: React.FC = () => {
     navigator.clipboard
       .writeText(uploadedPipe)
       .then(() => {
-        setModalType('copy');
+        setModalType("copy");
         setShowModal(true);
       })
       .catch((err) => {
@@ -183,11 +189,11 @@ const App: React.FC = () => {
   };
 
   const refreshSavedData = (): void => {
-    setSavedDataRefreshKey(prev => prev + 1);
+    setSavedDataRefreshKey((prev) => prev + 1);
   };
 
   const toggleRowExpansion = (rowIndex: number): void => {
-    setExpandedRows(prev => {
+    setExpandedRows((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(rowIndex)) {
         newSet.delete(rowIndex);
@@ -218,19 +224,21 @@ const App: React.FC = () => {
         overflow: "auto",
       }}
     >
-      <div style={{ 
-        maxWidth: "900px", 
-        margin: "0 auto", 
-        padding: "20px",
-        paddingBottom: "40px" 
-      }}>
+      <div
+        style={{
+          maxWidth: "900px",
+          margin: "0 auto",
+          padding: "20px",
+          paddingBottom: "40px",
+        }}
+      >
         <Header />
         <QuickStartGuide />
         <TemplateSelector
           selectedTemplate={selectedTemplate}
           onSelectTemplate={handleSelectTemplate}
           onResetTemplate={handleResetTemplate}
-          onToggleConfig={() => setShowConfig(prev => !prev)}
+          onToggleConfig={() => setShowConfig((prev) => !prev)}
           showConfig={showConfig}
         />
 
@@ -661,7 +669,7 @@ const App: React.FC = () => {
                         : "linear-gradient(145deg, rgba(107, 114, 128, 0.3), rgba(107, 114, 128, 0.2))",
                       fontSize: "14px",
                       padding: "12px 16px",
-                      opacity: (pastedPipe.trim() && !isProcessing) ? 1 : 0.6,
+                      opacity: pastedPipe.trim() && !isProcessing ? 1 : 0.6,
                       margin: "0 auto",
                       textAlign: "center",
                       boxSizing: "border-box",
@@ -715,7 +723,8 @@ const App: React.FC = () => {
                     style={{
                       ...liquidButtonStyle,
                       width: "calc(100% - 32px)",
-                      background: "linear-gradient(145deg, rgba(139, 92, 246, 0.3), rgba(139, 92, 246, 0.2))",
+                      background:
+                        "linear-gradient(145deg, rgba(139, 92, 246, 0.3), rgba(139, 92, 246, 0.2))",
                       fontSize: "14px",
                       padding: "12px 16px",
                       margin: "0 auto",
@@ -734,7 +743,8 @@ const App: React.FC = () => {
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                      gridTemplateColumns:
+                        "repeat(auto-fit, minmax(180px, 1fr))",
                       gap: "16px",
                       marginBottom: "32px",
                       padding: "0 16px",
@@ -994,11 +1004,15 @@ const App: React.FC = () => {
                               gap: "12px",
                             }}
                           >
-                            <span style={{ 
-                              fontSize: "18px",
-                              transition: "transform 0.3s ease",
-                              transform: expandedRows.has(i) ? "rotate(90deg)" : "rotate(0deg)"
-                            }}>
+                            <span
+                              style={{
+                                fontSize: "18px",
+                                transition: "transform 0.3s ease",
+                                transform: expandedRows.has(i)
+                                  ? "rotate(90deg)"
+                                  : "rotate(0deg)",
+                              }}
+                            >
                               ▶️
                             </span>
                             <span style={{ fontSize: "20px" }}>📄</span>
@@ -1016,7 +1030,13 @@ const App: React.FC = () => {
                               {row.length} fields
                             </span>
                           </div>
-                          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: "8px",
+                              alignItems: "center",
+                            }}
+                          >
                             {expandedRows.has(i) && editRowIdx !== i && (
                               <button
                                 onClick={(e) => {
@@ -1251,17 +1271,21 @@ const App: React.FC = () => {
         )}
       </div>
 
-      <SuccessModal 
-        show={showModal} 
+      <SuccessModal
+        show={showModal}
         onClose={() => setShowModal(false)}
         autoCloseSeconds={2}
-        title={modalType === 'copy' ? "Successfully Copied!" : "Successfully Saved!"}
-        message={modalType === 'copy' 
-          ? "Data is now in your clipboard and ready to paste" 
-          : "Your pipe data has been saved to local storage"}
-        icon={modalType === 'copy' ? "✅" : "💾"}
+        title={
+          modalType === "copy" ? "Successfully Copied!" : "Successfully Saved!"
+        }
+        message={
+          modalType === "copy"
+            ? "Data is now in your clipboard and ready to paste"
+            : "Your pipe data has been saved to local storage"
+        }
+        icon={modalType === "copy" ? "✅" : "💾"}
       />
-      
+
       <SaveDataModal
         show={showSaveModal}
         onClose={() => setShowSaveModal(false)}
@@ -1269,11 +1293,11 @@ const App: React.FC = () => {
         template={selectedTemplate}
         onDataSaved={refreshSavedData}
         onShowSuccessModal={() => {
-          setModalType('save');
+          setModalType("save");
           setShowModal(true);
         }}
       />
-      
+
       <SavedDataModal
         key={`saved-data-${savedDataRefreshKey}`}
         show={showSavedDataModal}
@@ -1281,7 +1305,7 @@ const App: React.FC = () => {
         onLoadData={handleLoadSavedData}
         currentTemplate={selectedTemplate}
       />
-      
+
       <GlobalStyles />
     </div>
   );
