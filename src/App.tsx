@@ -3,6 +3,8 @@ import Header from './components/Header';
 import QuickStartGuide from './components/QuickStartGuide';
 import TemplateSelector from './components/TemplateSelector';
 import SuccessModal from './components/SuccessModal';
+import SaveDataModal from './components/SaveDataModal';
+import SavedDataModal from './components/SavedDataModal';
 import GlobalStyles from './components/GlobalStyles';
 import { useTemplateData } from './hooks/useTemplateData';
 import { downloadFile, generateFileName } from './utils/file';
@@ -22,6 +24,10 @@ const App: React.FC = () => {
   const [editIdx, setEditIdx] = useState<number | null>(null);
   const [editDesc, setEditDesc] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [showSaveModal, setShowSaveModal] = useState<boolean>(false);
+  const [showSavedDataModal, setShowSavedDataModal] = useState<boolean>(false);
+  const [savedDataRefreshKey, setSavedDataRefreshKey] = useState<number>(0);
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
 
   const {
     selectedTemplate,
@@ -152,6 +158,42 @@ const App: React.FC = () => {
   const renderTooltip = (index: number): string => {
     const config = configs.find((cfg) => cfg.index === index);
     return config ? config.description : "Unknown";
+  };
+
+  const handleSaveData = (): void => {
+    if (!uploadedPipe.trim()) {
+      alert("No data to save.");
+      return;
+    }
+    if (!selectedTemplate) {
+      alert("Please select a template first.");
+      return;
+    }
+    setShowSaveModal(true);
+  };
+
+  const handleLoadSavedData = (data: string): void => {
+    setIsProcessing(true);
+    setTimeout(() => {
+      processPipeMapping(data);
+      setIsProcessing(false);
+    }, 100);
+  };
+
+  const refreshSavedData = (): void => {
+    setSavedDataRefreshKey(prev => prev + 1);
+  };
+
+  const toggleRowExpansion = (rowIndex: number): void => {
+    setExpandedRows(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(rowIndex)) {
+        newSet.delete(rowIndex);
+      } else {
+        newSet.add(rowIndex);
+      }
+      return newSet;
+    });
   };
 
   return (
@@ -627,6 +669,61 @@ const App: React.FC = () => {
                     {isProcessing ? "⏳ Processing..." : "🚀 Process Data"}
                   </button>
                 </div>
+
+                {/* Load Saved Data Section */}
+                <div
+                  style={{
+                    background:
+                      "linear-gradient(145deg, rgba(139, 92, 246, 0.1), rgba(124, 58, 237, 0.1))",
+                    backdropFilter: "blur(12px)",
+                    borderRadius: "24px",
+                    padding: "32px",
+                    border: "1px solid rgba(139, 92, 246, 0.2)",
+                    textAlign: "center",
+                    transition: "all 0.3s ease",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "24px",
+                      fontWeight: "700",
+                      color: "rgba(255,255,255,0.95)",
+                      marginBottom: "20px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "12px",
+                    }}
+                  >
+                    <span style={{ fontSize: "32px" }}>💾</span>
+                    Load Saved Data
+                  </div>
+                  <p
+                    style={{
+                      color: "rgba(255,255,255,0.7)",
+                      fontSize: "14px",
+                      marginBottom: "24px",
+                      lineHeight: "1.5",
+                    }}
+                  >
+                    Load previously saved pipe data from your collection
+                  </p>
+                  <button
+                    onClick={() => setShowSavedDataModal(true)}
+                    style={{
+                      ...liquidButtonStyle,
+                      width: "calc(100% - 32px)",
+                      background: "linear-gradient(145deg, rgba(139, 92, 246, 0.3), rgba(139, 92, 246, 0.2))",
+                      fontSize: "14px",
+                      padding: "12px 16px",
+                      margin: "0 auto",
+                      textAlign: "center",
+                      boxSizing: "border-box",
+                    }}
+                  >
+                    📁 Browse Saved Data
+                  </button>
+                </div>
               </div>
 
               {uploadedPipe && (
@@ -635,7 +732,7 @@ const App: React.FC = () => {
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
                       gap: "16px",
                       marginBottom: "32px",
                       padding: "0 16px",
@@ -654,6 +751,20 @@ const App: React.FC = () => {
                       }}
                     >
                       💾 Download File
+                    </button>
+                    <button
+                      onClick={handleSaveData}
+                      style={{
+                        ...liquidButtonStyle,
+                        background:
+                          "linear-gradient(145deg, rgba(139, 92, 246, 0.3), rgba(139, 92, 246, 0.2))",
+                        fontSize: "14px",
+                        padding: "12px 16px",
+                        width: "100%",
+                        textAlign: "center",
+                      }}
+                    >
+                      🗂️ Save Data
                     </button>
                     <button
                       onClick={handleUpdateSenderReferenceAndValueDate}
@@ -862,7 +973,7 @@ const App: React.FC = () => {
                       >
                         <div
                           style={{
-                            marginBottom: "20px",
+                            marginBottom: expandedRows.has(i) ? "20px" : "0",
                             color: "rgba(255,255,255,0.95)",
                             fontWeight: "700",
                             fontSize: "18px",
@@ -870,7 +981,9 @@ const App: React.FC = () => {
                             alignItems: "center",
                             justifyContent: "space-between",
                             gap: "12px",
+                            cursor: "pointer",
                           }}
+                          onClick={() => toggleRowExpansion(i)}
                         >
                           <div
                             style={{
@@ -879,6 +992,13 @@ const App: React.FC = () => {
                               gap: "12px",
                             }}
                           >
+                            <span style={{ 
+                              fontSize: "18px",
+                              transition: "transform 0.3s ease",
+                              transform: expandedRows.has(i) ? "rotate(90deg)" : "rotate(0deg)"
+                            }}>
+                              ▶️
+                            </span>
                             <span style={{ fontSize: "20px" }}>📄</span>
                             <span>Data Row {i + 1}</span>
                             <span
@@ -894,23 +1014,35 @@ const App: React.FC = () => {
                               {row.length} fields
                             </span>
                           </div>
-                          {editRowIdx !== i && (
-                            <button
-                              onClick={() => handleEditUploadedRow(i)}
-                              style={{
-                                ...liquidButtonStyle,
-                                background:
-                                  "linear-gradient(145deg, rgba(99, 102, 241, 0.3), rgba(99, 102, 241, 0.2))",
-                                padding: "8px 16px",
-                                fontSize: "14px",
-                              }}
-                            >
-                              ✏️ Edit Row
-                            </button>
-                          )}
+                          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                            {expandedRows.has(i) && editRowIdx !== i && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditUploadedRow(i);
+                                }}
+                                style={{
+                                  ...liquidButtonStyle,
+                                  background:
+                                    "linear-gradient(145deg, rgba(99, 102, 241, 0.3), rgba(99, 102, 241, 0.2))",
+                                  padding: "8px 16px",
+                                  fontSize: "14px",
+                                }}
+                              >
+                                ✏️ Edit Row
+                              </button>
+                            )}
+                            <span style={{ 
+                              fontSize: "14px", 
+                              color: "rgba(255,255,255,0.6)",
+                              userSelect: "none"
+                            }}>
+                              {expandedRows.has(i) ? "Click to collapse" : "Click to expand"}
+                            </span>
+                          </div>
                         </div>
 
-                        {editRowIdx === i ? (
+                        {expandedRows.has(i) && editRowIdx === i ? (
                           <div>
                             <div
                               style={{
@@ -1008,7 +1140,7 @@ const App: React.FC = () => {
                               </button>
                             </div>
                           </div>
-                        ) : (
+                        ) : expandedRows.has(i) ? (
                           <div
                             style={{
                               display: "grid",
@@ -1113,7 +1245,7 @@ const App: React.FC = () => {
                               </div>
                             ))}
                           </div>
-                        )}
+                        ) : null}
                       </div>
                     ))}
                   </div>
@@ -1129,6 +1261,23 @@ const App: React.FC = () => {
         onClose={() => setShowModal(false)}
         autoCloseSeconds={2}
       />
+      
+      <SaveDataModal
+        show={showSaveModal}
+        onClose={() => setShowSaveModal(false)}
+        data={uploadedPipe}
+        template={selectedTemplate}
+        onDataSaved={refreshSavedData}
+      />
+      
+      <SavedDataModal
+        key={`saved-data-${savedDataRefreshKey}`}
+        show={showSavedDataModal}
+        onClose={() => setShowSavedDataModal(false)}
+        onLoadData={handleLoadSavedData}
+        currentTemplate={selectedTemplate}
+      />
+      
       <GlobalStyles />
     </div>
   );

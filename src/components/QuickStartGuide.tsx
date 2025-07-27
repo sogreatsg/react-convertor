@@ -27,57 +27,80 @@ const QuickStartGuide: React.FC = () => {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
           gap: "16px",
           color: "rgba(255,255,255,0.85)",
-          fontSize: "16px",
+          fontSize: "15px",
           lineHeight: "1.6",
         }}
       >
         <div
           style={{
-            padding: "20px",
-            background: "rgba(255, 255, 255, 0.05)",
+            padding: "18px",
+            background: "rgba(99, 102, 241, 0.08)",
             borderRadius: "16px",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
+            border: "1px solid rgba(99, 102, 241, 0.15)",
           }}
         >
-          <div style={{ fontSize: "24px", marginBottom: "12px" }}>🎯</div>
-          <strong style={{ color: "rgba(255,255,255,0.95)" }}>
-            Interactive Data
+          <div style={{ fontSize: "24px", marginBottom: "10px" }}>🎯</div>
+          <strong style={{ color: "rgba(255,255,255,0.95)", fontSize: "16px" }}>
+            1. Select Template
           </strong>
           <br />
-          Hover over pipe data to see field descriptions
+          <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.75)" }}>
+            Choose your data format from the dropdown menu
+          </span>
         </div>
         <div
           style={{
-            padding: "20px",
-            background: "rgba(255, 255, 255, 0.05)",
+            padding: "18px",
+            background: "rgba(16, 185, 129, 0.08)",
             borderRadius: "16px",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
+            border: "1px solid rgba(16, 185, 129, 0.15)",
           }}
         >
-          <div style={{ fontSize: "24px", marginBottom: "12px" }}>✨</div>
-          <strong style={{ color: "rgba(255,255,255,0.95)" }}>
-            Quick Edit
+          <div style={{ fontSize: "24px", marginBottom: "10px" }}>📤</div>
+          <strong style={{ color: "rgba(255,255,255,0.95)", fontSize: "16px" }}>
+            2. Import Data
           </strong>
           <br />
-          Double-click on any pipe value to edit instantly
+          <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.75)" }}>
+            Upload .txt files, paste text, or load saved data
+          </span>
         </div>
         <div
           style={{
-            padding: "20px",
-            background: "rgba(255, 255, 255, 0.05)",
+            padding: "18px",
+            background: "rgba(139, 92, 246, 0.08)",
             borderRadius: "16px",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
+            border: "1px solid rgba(139, 92, 246, 0.15)",
           }}
         >
-          <div style={{ fontSize: "24px", marginBottom: "12px" }}>📋</div>
-          <strong style={{ color: "rgba(255,255,255,0.95)" }}>
-            Import Data
+          <div style={{ fontSize: "24px", marginBottom: "10px" }}>💾</div>
+          <strong style={{ color: "rgba(255,255,255,0.95)", fontSize: "16px" }}>
+            3. Save & Manage
           </strong>
           <br />
-          Upload .txt files or paste pipe-formatted text
+          <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.75)" }}>
+            Save your processed data with custom names
+          </span>
+        </div>
+        <div
+          style={{
+            padding: "18px",
+            background: "rgba(245, 158, 11, 0.08)",
+            borderRadius: "16px",
+            border: "1px solid rgba(245, 158, 11, 0.15)",
+          }}
+        >
+          <div style={{ fontSize: "24px", marginBottom: "10px" }}>✨</div>
+          <strong style={{ color: "rgba(255,255,255,0.95)", fontSize: "16px" }}>
+            4. Edit & Export
+          </strong>
+          <br />
+          <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.75)" }}>
+            Double-click to edit, then download your results
+          </span>
         </div>
       </div>
     </div>

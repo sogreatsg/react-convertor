@@ -18,3 +18,12 @@ export interface MappedItem {
 export interface TemplateConfigsType {
   [key: string]: PipeConfig[];
 }
+
+export interface SavedPipeData {
+  id: string;
+  name: string;
+  data: string;
+  template: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
