@@ -1032,13 +1032,6 @@ const App: React.FC = () => {
                                 ✏️ Edit Row
                               </button>
                             )}
-                            <span style={{ 
-                              fontSize: "14px", 
-                              color: "rgba(255,255,255,0.6)",
-                              userSelect: "none"
-                            }}>
-                              {expandedRows.has(i) ? "Click to collapse" : "Click to expand"}
-                            </span>
                           </div>
                         </div>
 
