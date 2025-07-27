@@ -15,6 +15,7 @@ document.title = "Template Helper";
 
 const App: React.FC = () => {
   const [showModal, setShowModal] = useState<boolean>(false);
+  const [modalType, setModalType] = useState<'copy' | 'save'>('copy');
   const [showConfig, setShowConfig] = useState<boolean>(false);
   const [pastedPipe, setPastedPipe] = useState<string>("");
   const [editRowIdx, setEditRowIdx] = useState<number | null>(null);
@@ -148,6 +149,7 @@ const App: React.FC = () => {
     navigator.clipboard
       .writeText(uploadedPipe)
       .then(() => {
+        setModalType('copy');
         setShowModal(true);
       })
       .catch((err) => {
@@ -739,34 +741,6 @@ const App: React.FC = () => {
                     }}
                   >
                     <button
-                      onClick={handleDownloadTemplateFile}
-                      style={{
-                        ...liquidButtonStyle,
-                        background:
-                          "linear-gradient(145deg, rgba(99, 102, 241, 0.3), rgba(99, 102, 241, 0.2))",
-                        fontSize: "14px",
-                        padding: "12px 16px",
-                        width: "100%",
-                        textAlign: "center",
-                      }}
-                    >
-                      💾 Download File
-                    </button>
-                    <button
-                      onClick={handleSaveData}
-                      style={{
-                        ...liquidButtonStyle,
-                        background:
-                          "linear-gradient(145deg, rgba(139, 92, 246, 0.3), rgba(139, 92, 246, 0.2))",
-                        fontSize: "14px",
-                        padding: "12px 16px",
-                        width: "100%",
-                        textAlign: "center",
-                      }}
-                    >
-                      🗂️ Save Data
-                    </button>
-                    <button
                       onClick={handleUpdateSenderReferenceAndValueDate}
                       style={{
                         ...liquidButtonStyle,
@@ -793,6 +767,34 @@ const App: React.FC = () => {
                       }}
                     >
                       📋 Copy to Clipboard
+                    </button>
+                    <button
+                      onClick={handleDownloadTemplateFile}
+                      style={{
+                        ...liquidButtonStyle,
+                        background:
+                          "linear-gradient(145deg, rgba(99, 102, 241, 0.3), rgba(99, 102, 241, 0.2))",
+                        fontSize: "14px",
+                        padding: "12px 16px",
+                        width: "100%",
+                        textAlign: "center",
+                      }}
+                    >
+                      💾 Download File
+                    </button>
+                    <button
+                      onClick={handleSaveData}
+                      style={{
+                        ...liquidButtonStyle,
+                        background:
+                          "linear-gradient(145deg, rgba(139, 92, 246, 0.3), rgba(139, 92, 246, 0.2))",
+                        fontSize: "14px",
+                        padding: "12px 16px",
+                        width: "100%",
+                        textAlign: "center",
+                      }}
+                    >
+                      🗂️ Save Data
                     </button>
                   </div>
 
@@ -1253,6 +1255,11 @@ const App: React.FC = () => {
         show={showModal} 
         onClose={() => setShowModal(false)}
         autoCloseSeconds={2}
+        title={modalType === 'copy' ? "Successfully Copied!" : "Successfully Saved!"}
+        message={modalType === 'copy' 
+          ? "Data is now in your clipboard and ready to paste" 
+          : "Your pipe data has been saved to local storage"}
+        icon={modalType === 'copy' ? "✅" : "💾"}
       />
       
       <SaveDataModal
@@ -1261,6 +1268,10 @@ const App: React.FC = () => {
         data={uploadedPipe}
         template={selectedTemplate}
         onDataSaved={refreshSavedData}
+        onShowSuccessModal={() => {
+          setModalType('save');
+          setShowModal(true);
+        }}
       />
       
       <SavedDataModal

@@ -1,5 +1,5 @@
-import React from 'react';
-import { liquidGlassStyle } from '../styles/theme';
+import React from "react";
+import { liquidGlassStyle } from "../styles/theme";
 
 const QuickStartGuide: React.FC = () => {
   return (
@@ -26,81 +26,146 @@ const QuickStartGuide: React.FC = () => {
       </h3>
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-          gap: "16px",
-          color: "rgba(255,255,255,0.85)",
-          fontSize: "15px",
-          lineHeight: "1.6",
+          overflow: "hidden",
+          position: "relative",
+          height: "140px",
+          borderRadius: "16px",
+          background: "rgba(0, 0, 0, 0)",
         }}
       >
         <div
           style={{
-            padding: "18px",
-            background: "rgba(99, 102, 241, 0.08)",
-            borderRadius: "16px",
-            border: "1px solid rgba(99, 102, 241, 0.15)",
+            display: "flex",
+            gap: "16px",
+            animation: "scroll 20s linear infinite",
+            paddingRight: "16px",
           }}
         >
-          <div style={{ fontSize: "24px", marginBottom: "10px" }}>🎯</div>
-          <strong style={{ color: "rgba(255,255,255,0.95)", fontSize: "16px" }}>
-            1. Select Template
-          </strong>
-          <br />
-          <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.75)" }}>
-            Choose your data format from the dropdown menu
-          </span>
-        </div>
-        <div
-          style={{
-            padding: "18px",
-            background: "rgba(16, 185, 129, 0.08)",
-            borderRadius: "16px",
-            border: "1px solid rgba(16, 185, 129, 0.15)",
-          }}
-        >
-          <div style={{ fontSize: "24px", marginBottom: "10px" }}>📤</div>
-          <strong style={{ color: "rgba(255,255,255,0.95)", fontSize: "16px" }}>
-            2. Import Data
-          </strong>
-          <br />
-          <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.75)" }}>
-            Upload .txt files, paste text, or load saved data
-          </span>
-        </div>
-        <div
-          style={{
-            padding: "18px",
-            background: "rgba(139, 92, 246, 0.08)",
-            borderRadius: "16px",
-            border: "1px solid rgba(139, 92, 246, 0.15)",
-          }}
-        >
-          <div style={{ fontSize: "24px", marginBottom: "10px" }}>💾</div>
-          <strong style={{ color: "rgba(255,255,255,0.95)", fontSize: "16px" }}>
-            3. Save & Manage
-          </strong>
-          <br />
-          <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.75)" }}>
-            Save your processed data with custom names
-          </span>
-        </div>
-        <div
-          style={{
-            padding: "18px",
-            background: "rgba(245, 158, 11, 0.08)",
-            borderRadius: "16px",
-            border: "1px solid rgba(245, 158, 11, 0.15)",
-          }}
-        >
-          <div style={{ fontSize: "24px", marginBottom: "10px" }}>✨</div>
-          <strong style={{ color: "rgba(255,255,255,0.95)", fontSize: "16px" }}>
-            4. Edit & Export
-          </strong>
-          <br />
-          <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.75)" }}>
-            Double-click to edit, then download your results
-          </span>
+          {/* Duplicate the cards to create seamless loop */}
+          {[...Array(3)].map((_, setIndex) => (
+            <React.Fragment key={setIndex}>
+              <div
+                style={{
+                  padding: "18px",
+                  background: "rgba(99, 102, 241, 0.08)",
+                  borderRadius: "16px",
+                  border: "1px solid rgba(99, 102, 241, 0.15)",
+                  minWidth: "220px",
+                  flexShrink: 0,
+                  height: "100px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                }}
+              >
+                <div style={{ fontSize: "20px", marginBottom: "8px" }}>🎯</div>
+                <strong
+                  style={{ color: "rgba(255,255,255,0.95)", fontSize: "14px" }}
+                >
+                  1. Select Template
+                </strong>
+                <span
+                  style={{
+                    fontSize: "12px",
+                    color: "rgba(255,255,255,0.75)",
+                    marginTop: "4px",
+                  }}
+                >
+                  Choose your data format
+                </span>
+              </div>
+              <div
+                style={{
+                  padding: "18px",
+                  background: "rgba(16, 185, 129, 0.08)",
+                  borderRadius: "16px",
+                  border: "1px solid rgba(16, 185, 129, 0.15)",
+                  minWidth: "220px",
+                  flexShrink: 0,
+                  height: "100px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                }}
+              >
+                <div style={{ fontSize: "20px", marginBottom: "8px" }}>📤</div>
+                <strong
+                  style={{ color: "rgba(255,255,255,0.95)", fontSize: "14px" }}
+                >
+                  2. Import Data
+                </strong>
+                <span
+                  style={{
+                    fontSize: "12px",
+                    color: "rgba(255,255,255,0.75)",
+                    marginTop: "4px",
+                  }}
+                >
+                  Upload files or paste text
+                </span>
+              </div>
+              <div
+                style={{
+                  padding: "18px",
+                  background: "rgba(139, 92, 246, 0.08)",
+                  borderRadius: "16px",
+                  border: "1px solid rgba(139, 92, 246, 0.15)",
+                  minWidth: "220px",
+                  flexShrink: 0,
+                  height: "100px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                }}
+              >
+                <div style={{ fontSize: "20px", marginBottom: "8px" }}>💾</div>
+                <strong
+                  style={{ color: "rgba(255,255,255,0.95)", fontSize: "14px" }}
+                >
+                  3. Save & Manage
+                </strong>
+                <span
+                  style={{
+                    fontSize: "12px",
+                    color: "rgba(255,255,255,0.75)",
+                    marginTop: "4px",
+                  }}
+                >
+                  Save with custom names
+                </span>
+              </div>
+              <div
+                style={{
+                  padding: "18px",
+                  background: "rgba(245, 158, 11, 0.08)",
+                  borderRadius: "16px",
+                  border: "1px solid rgba(245, 158, 11, 0.15)",
+                  minWidth: "220px",
+                  flexShrink: 0,
+                  height: "100px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                }}
+              >
+                <div style={{ fontSize: "20px", marginBottom: "8px" }}>✨</div>
+                <strong
+                  style={{ color: "rgba(255,255,255,0.95)", fontSize: "14px" }}
+                >
+                  4. Edit & Export
+                </strong>
+                <span
+                  style={{
+                    fontSize: "12px",
+                    color: "rgba(255,255,255,0.75)",
+                    marginTop: "4px",
+                  }}
+                >
+                  Edit and download results
+                </span>
+              </div>
+            </React.Fragment>
+          ))}
         </div>
       </div>
     </div>

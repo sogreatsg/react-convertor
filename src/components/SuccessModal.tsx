@@ -5,12 +5,18 @@ interface SuccessModalProps {
   show: boolean;
   onClose?: () => void;
   autoCloseSeconds?: number;
+  title?: string;
+  message?: string;
+  icon?: string;
 }
 
 const SuccessModal: React.FC<SuccessModalProps> = ({ 
   show, 
   onClose,
-  autoCloseSeconds = 2 
+  autoCloseSeconds = 2,
+  title = "Successfully Copied!",
+  message = "Data is now in your clipboard and ready to paste",
+  icon = "✅"
 }) => {
   const [countdown, setCountdown] = useState(autoCloseSeconds);
 
@@ -48,7 +54,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        zIndex: 1000,
+        zIndex: 1100,
       }}
     >
       <div
@@ -67,7 +73,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
             animation: "bounce 0.6s ease",
           }}
         >
-          ✅
+          {icon}
         </div>
         <h3
           style={{
@@ -77,7 +83,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
             fontSize: "20px",
           }}
         >
-          Successfully Copied!
+          {title}
         </h3>
         <p
           style={{
@@ -87,7 +93,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
             fontWeight: "500",
           }}
         >
-          Data is now in your clipboard and ready to paste
+          {message}
         </p>
         <div
           style={{

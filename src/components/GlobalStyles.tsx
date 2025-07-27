@@ -46,6 +46,15 @@ const GlobalStyles: React.FC = () => {
           }
         }
         
+        @keyframes scroll {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(calc(-100% / 3));
+          }
+        }
+        
         input::placeholder,
         textarea::placeholder {
           color: rgba(255, 255, 255, 0.5);

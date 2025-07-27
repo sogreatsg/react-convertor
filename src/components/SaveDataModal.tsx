@@ -8,6 +8,7 @@ interface SaveDataModalProps {
   data: string;
   template: string;
   onDataSaved?: () => void;
+  onShowSuccessModal?: () => void;
 }
 
 const SaveDataModal: React.FC<SaveDataModalProps> = ({
@@ -16,6 +17,7 @@ const SaveDataModal: React.FC<SaveDataModalProps> = ({
   data,
   template,
   onDataSaved,
+  onShowSuccessModal,
 }) => {
   const { saveData } = useSavedPipeData();
   const [name, setName] = useState<string>("");
@@ -48,10 +50,12 @@ const SaveDataModal: React.FC<SaveDataModalProps> = ({
         if (onDataSaved) {
           onDataSaved();
         }
-        // ปิด modal หลังจาก 1.5 วินาที
-        setTimeout(() => {
-          onClose();
-        }, 1500);
+        // แสดง SuccessModal และปิด SaveDataModal ทันที
+        if (onShowSuccessModal) {
+          onShowSuccessModal();
+        }
+        // ปิด modal ทันที
+        onClose();
       } else {
         setError(result.error || "Failed to save data.");
       }
