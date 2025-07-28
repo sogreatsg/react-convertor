@@ -72,20 +72,6 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
           marginTop: "24px" 
         }}>
           <button
-            onClick={onResetTemplate}
-            style={{
-              ...liquidButtonStyle,
-              background:
-                "linear-gradient(145deg, rgba(239, 68, 68, 0.3), rgba(239, 68, 68, 0.2))",
-              fontSize: "14px",
-              padding: "12px 20px",
-              minWidth: "160px",
-              whiteSpace: "nowrap",
-            }}
-          >
-            🔄 Reset to Default
-          </button>
-          <button
             onClick={onToggleConfig}
             style={{
               ...liquidButtonStyle,

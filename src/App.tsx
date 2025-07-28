@@ -251,8 +251,26 @@ const App: React.FC = () => {
                   ...liquidGlassStyle,
                   padding: "32px",
                   marginBottom: "32px",
+                  position: "relative",
                 }}
               >
+                <button
+                  onClick={handleResetTemplate}
+                  style={{
+                    ...liquidButtonStyle,
+                    background:
+                      "linear-gradient(145deg, rgba(239, 68, 68, 0.3), rgba(239, 68, 68, 0.2))",
+                    fontSize: "14px",
+                    padding: "12px 20px",
+                    minWidth: "160px",
+                    whiteSpace: "nowrap",
+                    position: "absolute",
+                    top: 24,
+                    right: 24,
+                  }}
+                >
+                  🔄 Reset to Default
+                </button>
                 <h3
                   style={{
                     color: "rgba(255,255,255,0.95)",
