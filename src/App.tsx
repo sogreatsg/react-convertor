@@ -204,6 +204,17 @@ const App: React.FC = () => {
     });
   };
 
+  // State to track if image is loaded
+  const [bgLoaded, setBgLoaded] = useState(false);
+  const bgUrl = "https://picsum.photos/1920/1080";
+
+  // Preload image
+  React.useEffect(() => {
+    const img = new window.Image();
+    img.src = bgUrl;
+    img.onload = () => setBgLoaded(true);
+  }, []);
+
   return (
     <div
       style={{
@@ -215,15 +226,28 @@ const App: React.FC = () => {
         left: 0,
         right: 0,
         bottom: 0,
-        background:
-          "linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%)",
-        backgroundSize: "400% 400%",
-        animation: "gradientFlow 120s ease infinite",
+        background: bgLoaded
+          ? `url('${bgUrl}')`
+          : "linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%)",
+        backgroundSize: bgLoaded ? "cover" : "400% 400%",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        backgroundColor: "#667eea",
         fontFamily:
           '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif',
         overflow: "auto",
+        animation: !bgLoaded ? "gradientFlow 120s ease infinite" : undefined,
+        transition: "background 0.8s cubic-bezier(.4,2,.6,1)",
       }}
     >
+      {/* Add gradient animation keyframes */}
+      <style>{`
+        @keyframes gradientFlow {
+          0% {background-position: 0% 50%;}
+          50% {background-position: 100% 50%;}
+          100% {background-position: 0% 50%;}
+        }
+      `}</style>
       <div
         style={{
           maxWidth: "900px",
