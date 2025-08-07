@@ -206,7 +206,7 @@ const App: React.FC = () => {
 
   // State to track if image is loaded
   const [bgLoaded, setBgLoaded] = useState(false);
-  const bgUrl = "https://picsum.photos/1920/1080";
+  const bgUrl = "https://picsum.photos/1920/1080/notuse";
 
   // Preload image
   React.useEffect(() => {
