@@ -228,7 +228,7 @@ const App: React.FC = () => {
         bottom: 0,
         background: bgLoaded
           ? `url('${bgUrl}')`
-          : "linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%)",
+          : "linear-gradient(135deg, #171d36 0%, #291a38 25%, #442a47 50%, #5c4210 75%, #193752 100%)",
         backgroundSize: bgLoaded ? "cover" : "400% 400%",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
