@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Header from "./components/Header";
 import QuickStartGuide from "./components/QuickStartGuide";
 import TemplateSelector from "./components/TemplateSelector";
@@ -14,6 +14,7 @@ import {
   liquidInputStyle,
 } from "./styles/theme";
 import { MappedItem } from "./types";
+import { SketchPicker } from "react-color"; // Import a color picker library
 
 document.title = "Template Helper";
 
@@ -51,6 +52,26 @@ const App: React.FC = () => {
     deleteConfig,
     setUploadedMap,
   } = useTemplateData();
+
+  const [gradientColors, setGradientColors] = useState<string[]>([
+    "#3b82f6", // Default gradient start color
+    "#10b981", // Default gradient end color
+  ]);
+  const [showColorPicker, setShowColorPicker] = useState(false);
+
+  const handleGradientChange = (color: string, index: number) => {
+    const newColors = [...gradientColors];
+    newColors[index] = color;
+    setGradientColors(newColors);
+    localStorage.setItem("gradientColors", JSON.stringify(newColors));
+  };
+
+  const savedColors = localStorage.getItem("gradientColors");
+  useEffect(() => {
+    if (savedColors) {
+      setGradientColors(JSON.parse(savedColors));
+    }
+  }, []);
 
   const handleEditUploadedRow = (rowIdx: number): void => {
     const row = uploadedMap[rowIdx];
@@ -226,9 +247,7 @@ const App: React.FC = () => {
         left: 0,
         right: 0,
         bottom: 0,
-        background: bgLoaded
-          ? `url('${bgUrl}')`
-          : "linear-gradient(135deg, #171d36 0%, #291a38 25%, #442a47 50%, #5c4210 75%, #193752 100%)",
+        background: `linear-gradient(135deg, ${gradientColors[0]}, ${gradientColors[1]})`,
         backgroundSize: bgLoaded ? "cover" : "400% 400%",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
@@ -1349,6 +1368,115 @@ const App: React.FC = () => {
       />
 
       <GlobalStyles />
+
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          background: `linear-gradient(135deg, ${gradientColors[0]}, ${gradientColors[1]})`,
+          zIndex: -1,
+        }}
+      ></div>
+
+      <div style={{ position: "absolute", top: 20, right: 20 }}>
+        <button
+          onClick={() => setShowColorPicker((prev) => !prev)}
+          style={{
+            padding: "10px 20px",
+            borderRadius: "5px",
+            cursor: "pointer",
+            background:
+              "linear-gradient(145deg, rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.2))",
+            border: "none",
+            color: "#fff",
+            fontSize: "16px",
+            fontWeight: "600",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
+          <span>🎨</span>
+          Change Background Gradient
+        </button>
+        {showColorPicker && (
+          <div
+            style={{
+              display: "flex",
+              gap: "10px",
+              marginTop: "10px",
+              position: "absolute",
+              top: "60px",
+              right: 0,
+              zIndex: 1000,
+            }}
+          >
+            <div
+              style={{
+                background: "rgba(255, 255, 255, 0.1)",
+                borderRadius: "12px",
+                padding: "16px",
+                backdropFilter: "blur(10px)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+                minWidth: "200px",
+              }}
+            >
+              <p
+                style={{
+                  color: "rgba(255,255,255,0.9)",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  margin: 0,
+                }}
+              >
+                Start Color:
+              </p>
+              <SketchPicker
+                color={gradientColors[0]}
+                onChangeComplete={(color: { hex: string }) =>
+                  handleGradientChange(color.hex, 0)
+                }
+                disableAlpha
+              />
+            </div>
+            <div
+              style={{
+                background: "rgba(255, 255, 255, 0.1)",
+                borderRadius: "12px",
+                padding: "16px",
+                backdropFilter: "blur(10px)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+                minWidth: "200px",
+              }}
+            >
+              <p
+                style={{
+                  color: "rgba(255,255,255,0.9)",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  margin: 0,
+                }}
+              >
+                End Color:
+              </p>
+              <SketchPicker
+                color={gradientColors[1]}
+                onChangeComplete={(color: { hex: string }) =>
+                  handleGradientChange(color.hex, 1)
+                }
+                disableAlpha
+              />
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
