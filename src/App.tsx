@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import Header from "./components/Header";
-import QuickStartGuide from "./components/QuickStartGuide";
 import TemplateSelector from "./components/TemplateSelector";
 import SuccessModal from "./components/SuccessModal";
 import SaveDataModal from "./components/SaveDataModal";
@@ -276,7 +275,6 @@ const App: React.FC = () => {
         }}
       >
         <Header />
-        <QuickStartGuide />
         <TemplateSelector
           selectedTemplate={selectedTemplate}
           onSelectTemplate={handleSelectTemplate}
